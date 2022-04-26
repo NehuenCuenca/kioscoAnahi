@@ -9,6 +9,7 @@ class Server {
         this.app = express(); //creo una app de express cuando se instancie la clase Server
         this.port = process.env.PORT; //el process.env.PORT es variable global en node
         this.usuariosPathRoute = '/api/usuarios';
+        this.authPathRoute = '/api/auth';
 
         // Conectar a la BD
         this.conectarDB();
@@ -39,6 +40,7 @@ class Server {
 
     // configuracion de rutas
     routes() {
+        this.app.use( this.authPathRoute, require('../routes/auth.js') );
         this.app.use( this.usuariosPathRoute, require('../routes/usuarios.js') );
     }
 
