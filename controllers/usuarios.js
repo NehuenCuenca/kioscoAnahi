@@ -43,7 +43,7 @@ const postUsuarios = async(req, res = response) => {
 
 
     // Guardar BD
-    usuario.save();
+    await usuario.save();
 
     res.json({
         usuario
@@ -83,10 +83,11 @@ const deleteUsuarios = async(req, res = response) => {
     const { id } = req.params   
     const uid = req.uid;
 
-    const usuario = await Usuario.findByIdAndUpdate( id, { estado: false });
+    const usuario = await Usuario.findByIdAndUpdate( id, { estado: false } );
 
-    res.json(
-        usuario)
+    res.json({
+        usuario
+    });
 }
 
 

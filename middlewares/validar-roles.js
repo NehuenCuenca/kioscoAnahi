@@ -31,9 +31,10 @@ const tieneRole = ( ...roles ) => {
                 msg: 'Se quiere validar el rol sin validar el token primero'
             });
         }
+
         const { rol } = req.usuario;
 
-        if( !roles.includes(req.usuario.rol) ){
+        if( !roles.includes(rol) ){
             return res.status(400).json({
                 msg: `El servicio requiere uno de estos roles: ${roles}. Rol actual: ${rol}`
             });
