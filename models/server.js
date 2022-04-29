@@ -11,10 +11,11 @@ class Server {
         
         this.paths = {
             auth :      '/api/auth',
+            articulos:  '/api/articulos',
             clientes :  '/api/clientes',
-            usuarios :  '/api/usuarios',
             deudores :  '/api/deudores',
-            articulos : '/api/articulos',
+            proveedores: '/api/proveedores',
+            usuarios :  '/api/usuarios',
         };
 
         // Conectar a la BD
@@ -50,6 +51,7 @@ class Server {
         this.app.use( this.paths.articulos, require('../routes/articulos.js') );
         this.app.use( this.paths.clientes, require('../routes/clientes.js') );
         this.app.use( this.paths.deudores, require('../routes/deudores.js') );
+        this.app.use( this.paths.proveedores, require('../routes/proveedores.js') );
         this.app.use( this.paths.usuarios, require('../routes/usuarios.js') );
     }
 

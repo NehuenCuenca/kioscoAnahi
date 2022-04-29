@@ -19,7 +19,7 @@ const ClienteSchema = Schema({
     },
     estado: {
         type: Boolean,
-        default: true,
+        default: true
     }
 });
 

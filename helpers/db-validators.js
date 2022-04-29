@@ -1,6 +1,10 @@
+
 const Role = require('../models/role');
 const Usuario = require('../models/usuario');
 const Cliente = require('../models/cliente');
+const Proveedor = require('../models/proveedor');
+
+
 
 const esRoleValido = async(rol = '') => {
     const existeRol = await Role.findOne({ rol });
@@ -38,9 +42,20 @@ const existeClientePorID = async(id = '') => {
 } 
 
 
+// Verificar si existe el ID  de tal PROVEEDOR
+const existeProveedorPorID = async(id = '') => {
+    const existeProveedor = await Proveedor.findById( id );
+
+    if( !existeProveedor ){
+        throw new Error(`El id especificado (${id}) no existe `);
+    }
+} 
+
+
 module.exports = {
     esRoleValido,
     emailExiste,
     existeUsuarioPorID,
-    existeClientePorID
+    existeClientePorID,
+    existeProveedorPorID,
 }
