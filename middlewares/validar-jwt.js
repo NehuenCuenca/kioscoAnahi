@@ -17,6 +17,7 @@ const validarJWT = async( req, res = response, next) => {
 
     try {
         const { uid } = jwt.verify( token, process.env.SECRETORPRIVATEKEY );
+        console.log(uid)
         const usuario = await Usuario.findById( uid );
 
         if( !usuario ){
@@ -35,10 +36,18 @@ const validarJWT = async( req, res = response, next) => {
 
         next();
     } catch (error) {
-        console.log(error); 
-        res.status(401).json({
-            msg: "Token no valido"
-        });
+        // Verifico si el token expiró
+        if( error.name === 'TokenExpiredError' ){
+            res.status(401).json({
+                msg: "Token de sesion expirado - Inicie sesion de nuevo"
+            });
+
+        // Si el token no se pudo validar por cualquier otro error..
+        } else {
+            res.status(401).json({
+                msg: `Token no valido - ${error.name}`
+            });
+        }
     }
 
 }
