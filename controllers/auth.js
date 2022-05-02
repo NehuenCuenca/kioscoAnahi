@@ -34,12 +34,15 @@ const login = async( req, res = response) => {
             });
         }
 
-
         // Generar el token
         const token = await generarJWT( usuario.id );
-
+        
+        // Guardo el token en la BD
+        usuario.token = token
+        const usuarioConToken = await Usuario.findOneAndUpdate(usuario.id, { ...usuario } );
 
         res.json({
+            msg: 'Sesion iniciada correctamente',
             usuario,
             token
         });

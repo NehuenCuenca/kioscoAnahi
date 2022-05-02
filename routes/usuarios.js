@@ -39,7 +39,7 @@ router.get('/', getUsuarios ); //GET
 
 router.post('/',[
     check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    check('password', 'El password debe tener mas de 6 caracteres').isLength({ min: 6 }),
+    check('password', 'El password debe tener mas de 6 caracteres').isLength({ min: 4 }),
     check('correo', 'El correo no es valido').isEmail(),
     // check('rol', 'El rol no es valido').isIn(['ADMIN_ROLE', 'USER_ROLE']),
     check('correo').custom( emailExiste ),

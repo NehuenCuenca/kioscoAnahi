@@ -17,15 +17,17 @@ const validarJWT = async( req, res = response, next) => {
 
     try {
         const { uid } = jwt.verify( token, process.env.SECRETORPRIVATEKEY );
-        console.log(uid)
         const usuario = await Usuario.findById( uid );
+        console.log(usuario);
 
+        // Si el usuario no existe..
         if( !usuario ){
             return res.status(400).json({
                 msg: "Token no valido - usuario no existente en base de datos"
             });
         }
 
+        // Si el usuario existe pero esta "borrado en la BD"..
         if( !usuario.estado ){
             return res.status(400).json({
                 msg: "Token no valido - usuario con estado en false"
@@ -49,10 +51,35 @@ const validarJWT = async( req, res = response, next) => {
             });
         }
     }
+}
 
+
+const validarSesionUsuario = async( req, res = response, next) => {
+
+    const { correo } = req.body;
+    try {
+        const usuario = await Usuario.findOne({ correo });
+
+        // Si el usuario ya tiene un token (ya inició sesion)..
+        if( usuario.token !== '' ){
+            return res.status(400).json({
+                msg: "Token existente - el usuario ya inició sesion"
+            });
+        }
+        
+        next(); 
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            msg: `Sucedio un error inesperado - ${error}`
+        });
+    }
+    
 }
 
 
 module.exports = {
-    validarJWT
+    validarJWT,
+    validarSesionUsuario
 }

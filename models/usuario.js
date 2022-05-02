@@ -27,11 +27,15 @@ const UsuarioSchema = Schema({
     google: {
         type: Boolean,
         default: false
+    },
+    token: {
+        type: String,
+        default: ''
     }
 });
 
 UsuarioSchema.methods.toJSON = function() {
-    const { _id, __v, password, ...usuario } = this.toObject();    
+    const { _id, __v, password, token, ...usuario } = this.toObject();    
     usuario.uid = _id;
     return usuario;
 }
