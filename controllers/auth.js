@@ -3,7 +3,7 @@ const Usuario = require('../models/usuario');
 const bcryptjs = require('bcryptjs');
 const { generarJWT } = require("../helpers/generar-jwt");
 
-const login = async( req, res = response) => {
+const login = async( req, res = response ) => {
 
     const { correo, password } = req.body;
 
@@ -39,7 +39,7 @@ const login = async( req, res = response) => {
         
         // Guardo el token en la BD
         usuario.token = token
-        const usuarioConToken = await Usuario.findOneAndUpdate(usuario.id, { ...usuario } );
+        const usuarioConToken = await Usuario.findOneAndUpdate( usuario.id, { ...usuario } );
 
         res.json({
             msg: 'Sesion iniciada correctamente',
@@ -55,6 +55,35 @@ const login = async( req, res = response) => {
     }
 }
 
+const logout = async( req, res = response ) => {
+    const token = req.headers['x-token'];
+
+    try {
+        // Busco el usuario por su token y si retorna null ( es porque el usuario no tiene guardado un token en la BD)..
+        const usuario = await Usuario.findOne({ token });
+        if( !usuario ){
+            res.status(400).json({
+                msg: "Error - no hay token (la sesion ya se encuentra cerrada..)"
+            });
+        }
+
+        // Si lo encuentra, borro el token de la BD..
+        usuario.token = '';
+        await Usuario.findOneAndUpdate( usuario.id, { ...usuario } );
+
+        res.json({
+            msg: "Sesion cerrada exitosamente"
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            msg: "Error inesperado - la sesion no pudo cerrarse.."
+        });
+    }
+    
+}
+
 module.exports = {
-    login
+    login,
+    logout
 }

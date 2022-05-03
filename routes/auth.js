@@ -1,20 +1,29 @@
 const { Router } = require('express');  
-const { check } = require('express-validator');
+const { check, header } = require('express-validator');
 
-const { validarCampos, validarSesionUsuario } = require('../middlewares');
+const { validarCampos, validarJWT, validarSesionUsuario } = require('../middlewares');
 
-const { login } = require('../controllers/auth');
-
+const { login, logout } = require('../controllers/auth');
 
 
 const router = Router();
+
+
 
 router.post('/login',[
     check('correo', 'El correo es obligatorio').isEmail(),
     check('password', 'La contraseña es obligatorio').not().isEmpty(),
     // validarSesionUsuario,
     validarCampos
-], login ); //GET
+], login );
+
+
+router.get('/logout',[
+    // validarSesionUsuario,
+    // validarJWT,
+    header('x-token', 'El token es obligatorio en la peticion(request)').not().isEmpty(),
+    validarCampos
+], logout );
 
 
 module.exports = router;
