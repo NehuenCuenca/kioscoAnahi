@@ -11,15 +11,23 @@
       integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
       crossorigin="anonymous"
     />
-    <title>Acceso denegado</title>
+    <title>kioscoAnahi | login</title>
   </head>
-  <body class="container text-center">
+  <body class="container-fluid">
 	
-    
+    <div class="container-fluid">
+      <header class="d-flex flex-wrap align-items-center justify-content-center py-3 mb-4 border-bottom px-5">  
+        <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+          <li><a href="#" class="nav-link px-2 link-secondary fw-bold text-uppercase text-decoration-underline">Login</a></li>
+          <li><a href="./views/deudores.html" class="nav-link px-2 link-dark fw-bold text-uppercase text-decoration-underline">Deudores</a></li>
+          <li><a href="#" class="nav-link px-2 link-dark fw-bold text-uppercase text-decoration-underline">Acerca de</a></li>
+        </ul>
+      </header>
+    </div>
 
-    <main class="form-signin mt-5">
+    <main class="form-signin mt-5 container">
       <form id="login">
-        <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+        <h1 class="h3 mb-3 fw-normal  text-center">Please sign in</h1>
 
         <div class="form-floating">
           <input
@@ -48,6 +56,6 @@
       </form>
     </main>
 
-    <script src="./src/login.js"></script>
+    <script src="./src/login.js" type="module"></script>
   </body>
 </html>

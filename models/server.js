@@ -42,7 +42,6 @@ class Server {
 
         // Directorio publico
         this.app.use( express.static('public') )
-
     }
 
     // configuracion de rutas

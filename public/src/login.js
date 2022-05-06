@@ -1,10 +1,16 @@
 
 const login = document.querySelector('#login');
-const URL = 'http://localhost:8080';
-
+import { URL, vistas } from './variables.js';
+import { verificarToken, eliminarToken, redireccionar } from './funciones.js';
 
 cargarEventListenners();
 function cargarEventListenners() {
+    document.addEventListener('DOMContentLoaded', () => {
+        if( verificarToken() ){
+            redireccionar( vistas.menu );
+        }
+    });
+
     login.addEventListener('submit', validarLogin);
 }
 
@@ -12,6 +18,7 @@ function cargarEventListenners() {
 
 function validarLogin( e ) {
     e.preventDefault();
+
     const correo = document.querySelector('#correo');
     const password = document.querySelector('#password');
     correo.value   = 'test1@gmail.com',
@@ -44,15 +51,16 @@ const enviarLogin = async( datosUsuario ) => {
         const datosSesion = await resp.json();
         console.log(datosSesion);
         
-        if( resp.status !== 400 ){
+        if( resp.status === 200 ){
             const { token, msg } = datosSesion;
             
-            localStorage.setItem( 'x-token', JSON.stringify(token) );
+            localStorage.setItem( 'x-token', JSON.stringify(token).slice(1, -1) );
             mostrarMsj('success', msg);
 
             setTimeout(() => {
-                window.location.href = 'menu.html';
-            }, 1500);
+                console.log("Redireccionando al menú...");
+                redireccionar( vistas.menu );
+            }, 1200);
         } else {
             mostrarMsj('danger', msg);
         }   

@@ -38,7 +38,7 @@ const login = async( req, res = response ) => {
         const token = await generarJWT( usuario.id );
         
         // Guardo el token en la BD
-        usuario.token = token
+        usuario.token = token;
         const usuarioConToken = await Usuario.findOneAndUpdate( usuario.id, { ...usuario } );
 
         res.json({
@@ -46,6 +46,7 @@ const login = async( req, res = response ) => {
             usuario,
             token
         });
+        
 
     } catch (error) {
         console.log(error);
@@ -56,14 +57,16 @@ const login = async( req, res = response ) => {
 }
 
 const logout = async( req, res = response ) => {
-    const token = req.headers['x-token'];
+
+    const token = req.body['x-token'];
 
     try {
-        // Busco el usuario por su token y si retorna null ( es porque el usuario no tiene guardado un token en la BD)..
+        // Busco el usuario por su uid y si retorna null ( es porque el usuario no tiene guardado un token en la BD)..
         const usuario = await Usuario.findOne({ token });
+
         if( !usuario ){
-            res.status(400).json({
-                msg: "Error - no hay token (la sesion ya se encuentra cerrada..)"
+            return res.status(400).json({
+                msg: "Error - la sesion esta cerrada (el usuario no tiene token..)"
             });
         }
 
@@ -71,12 +74,12 @@ const logout = async( req, res = response ) => {
         usuario.token = '';
         await Usuario.findOneAndUpdate( usuario.id, { ...usuario } );
 
-        res.json({
+        res.status(200).json({
             msg: "Sesion cerrada exitosamente"
-        })
+        });
     } catch (error) {
         console.log(error);
-        res.status(500).json({
+        return res.status(500).json({
             msg: "Error inesperado - la sesion no pudo cerrarse.."
         });
     }
