@@ -1,4 +1,5 @@
-import { cerrarSesion, traerDatosAPI } from './funciones.js';
+
+import { cerrarSesion, traerDatosAPI } from './funciones-API.js';
 import { btnLogout } from './variables.js';
 
 
@@ -7,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async() =>{
 
     const { total, deudores } = await traerDatosAPI('deudores');
 
-    imprimirDeudores(total, deudores)
+    imprimirDeudores(total, deudores);
 
 });
 
@@ -56,13 +57,15 @@ function imprimirDeudores(total, deudores) {
             const modalDeudas = blockDeuda.querySelector(`#modalDeudas${i}`);
             modalDeudas.addEventListener('click', (e) => {
                 if(e.target.id === `modalDeudas${i}`){
-                    body.classList.remove('modal-open');
-                    body.style='';
+                    cerrarModalDeudas(i);
 
-                    modalDeudas.classList.remove('show');
-                    modalDeudas.style.display = 'none';
-                    modalDeudas.removeAttribute('role');
-                    modalShadow.remove();
+                    // body.classList.remove('modal-open');
+                    // body.style='';
+
+                    // modalDeudas.classList.remove('show');
+                    // modalDeudas.style.display = 'none';
+                    // modalDeudas.removeAttribute('role');
+                    // modalShadow.remove();
                 }
             });
 
@@ -72,17 +75,19 @@ function imprimirDeudores(total, deudores) {
 
             const btnCerrarModal = document.querySelector(`#btnCerrarModalDeudas${i}`);
             btnCerrarModal.addEventListener('click', () => {
-                body.classList.remove('modal-open');
-                body.style='';
+                cerrarModalDeudas(i);
+                // body.classList.remove('modal-open');
+                // body.style='';
 
-                modalDeudas.classList.remove('show');
-                modalDeudas.style.display = 'none';
-                modalDeudas.removeAttribute('role');
-                modalShadow.remove();
+                // modalDeudas.classList.remove('show');
+                // modalDeudas.style.display = 'none';
+                // modalDeudas.removeAttribute('role');
+                // modalShadow.remove();
             });
 
             const modalShadow = document.createElement('div');
             modalShadow.classList.add('modal-backdrop', 'fade', 'show');
+            modalShadow.id = `modalShadow${i}`;
 
             body.appendChild(modalShadow);
         })
@@ -92,6 +97,22 @@ function imprimirDeudores(total, deudores) {
 
 }
 
+
+function cerrarModalDeudas(i){
+    const body = document.querySelector('body');
+    const modalDeudas = document.querySelector(`#modalDeudas${i}`);
+    // const modalShadow = document.querySelector(`#modalShadow${i}`);
+
+    body.classList.remove('modal-open');
+    body.style='';
+
+    modalDeudas.classList.remove('show');
+    modalDeudas.style.display = 'none';
+    modalDeudas.removeAttribute('role');
+    setTimeout(() => {
+        document.querySelector(`#modalShadow${i}`).remove();
+    }, 500);
+}
 
 
 function registrarEventListeners(){

@@ -1,7 +1,9 @@
 
-const login = document.querySelector('#login');
 import { URL, vistas } from './variables.js';
 import { verificarToken, eliminarToken, redireccionar } from './funciones.js';
+import { mostrarMsj } from './funciones-UI.js';
+
+const login = document.querySelector('#login');
 
 cargarEventListenners();
 function cargarEventListenners() {
@@ -55,14 +57,14 @@ const enviarLogin = async( datosUsuario ) => {
             const { token, msg } = datosSesion;
             
             localStorage.setItem( 'x-token', JSON.stringify(token).slice(1, -1) );
-            mostrarMsj('success', msg);
+            mostrarMsj('success', msg, login);
 
             setTimeout(() => {
                 console.log("Redireccionando al menú...");
                 redireccionar( vistas.menu );
             }, 1200);
         } else {
-            mostrarMsj('danger', msg);
+            mostrarMsj('danger', msg, login);
         }   
 
     } catch (error) {   
@@ -71,7 +73,7 @@ const enviarLogin = async( datosUsuario ) => {
     }
 }
 
-function mostrarMsj( clase, msj ) {
+/* function mostrarMsj( clase, msj ) {
     // verifico si ya existe la alerta (asi no se repite...)
     const existeAlerta = document.querySelector('.alert');
     if( existeAlerta ){
@@ -87,5 +89,5 @@ function mostrarMsj( clase, msj ) {
     setTimeout(() => {
         bloqueMsj.remove();
     }, 2000);
-}
+} */
 

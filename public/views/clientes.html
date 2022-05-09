@@ -33,9 +33,29 @@
         </header>
     </div>
 
-    <main class="container mt-5">
-        <h1 class="bg-success text-light text-center">CLIENTES</h1>
+    <main class="container mt-5 justify-content-md-center">
+      <h1 class="bg-success text-light text-center">CLIENTES</h1>
 
+      <button id="btnCrearCliente" class="btn btn-primary my-3">Crear cliente</button>
+
+      <div class="table-responsive">
+        <table id="clientes"class="table table-success table-hover table-bordered table-sm align-middle">
+          <thead class="text-center">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Apellido</th>
+              <th scope="col">Direccion</th>
+              <th scope="col">Telefono</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </main>
+
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="../src/clientes.js" type="module"></script>
 </body>
 </html>

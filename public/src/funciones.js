@@ -36,7 +36,7 @@ export function redireccionar(vista){
 
 
 // FN de logout
-export async function cerrarSesion() {
+/* export async function cerrarSesion() {
     if( verificarToken ){
         const token = localStorage.getItem('x-token');
         console.log( JSON.stringify({ 'x-token': token }) )
@@ -62,15 +62,19 @@ export async function cerrarSesion() {
     
 
     redireccionar(vistas.login);
+} */
+
+
+export function validarInputString(input) {
+    if( input.trim().length === 0 ){
+        return false;
+    }
+    
+    return true;
 }
 
 
-export async function traerDatosAPI( controller, limite = 5, desde = 0 ) {
-    const resp = await fetch(`${URL}/api/${controller}?limite=${limite}&desde=${desde}`);
-    const data =  await resp.json();
 
-    return data;
-}
 
 
 
