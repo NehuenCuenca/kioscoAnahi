@@ -28,7 +28,7 @@ router.get('/:id', obtenerDeudor);
 // Crear deudor - aplicar middlewares
 router.post('/',[
     validarJWT,
-    tieneRole('ADMIN_ROLE', 'USER_ROLE'),
+    tieneRole('ADMIN_ROLE','VENTAS_ROLE', 'USER_ROLE'),
     check('historial', 'El historial es obligatorio').not().isEmpty(),
     check('cliente', 'El cliente es obligatorio').not().isEmpty(),
     check('cliente', 'No es un ID valido').isMongoId(),
@@ -40,7 +40,7 @@ router.post('/',[
 // Modificar/actualizar deudor
 router.put('/:id',[
     validarJWT,
-    tieneRole('ADMIN_ROLE', 'USER_ROLE'),
+    tieneRole('ADMIN_ROLE','VENTAS_ROLE', 'USER_ROLE'),
     check('historial', 'El historial es obligatorio').not().isEmpty(),
     check('cliente', 'El cliente es obligatorio').not().isEmpty(),
     check('cliente', 'No es un ID valido').isMongoId(),
@@ -52,11 +52,11 @@ router.put('/:id',[
 // Borrar deudor - middleware rolAdmin
 router.delete('/:id',[
     validarJWT,
-    tieneRole('ADMIN_ROLE', 'USER_ROLE'),
-    check('historial', 'El historial es obligatorio').not().isEmpty(),
-    check('cliente', 'El cliente es obligatorio').not().isEmpty(),
-    check('cliente', 'No es un ID valido').isMongoId(),
-    check('cliente').custom( existeClientePorID ),
+    tieneRole('ADMIN_ROLE', 'VENTAS_ROLE', 'USER_ROLE'),
+    // check('historial', 'El historial es obligatorio').not().isEmpty(),
+    // check('cliente', 'El cliente es obligatorio').not().isEmpty(),
+    // check('cliente', 'No es un ID valido').isMongoId(),
+    // check('cliente').custom( existeClientePorID ),
     validarCampos
 ], eliminarDeudor);
 

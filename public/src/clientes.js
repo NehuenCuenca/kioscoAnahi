@@ -1,5 +1,12 @@
 import { validarInputString } from './funciones.js';
-import { traerDatosAPI, traerDatosPorIdAPI, actualizarDatosAPI } from './funciones-API.js';
+
+import { 
+    traerDatosAPI,
+    traerDatosPorIdAPI,
+    actualizarDatosAPI,
+    enviarDatosAPI,
+    eliminarDatosAPI
+} from './funciones-API.js';
 
 import { 
     crearModal, 
@@ -11,10 +18,11 @@ import {
 } from './funciones-UI.js';
 
 
-
-
 document.addEventListener('DOMContentLoaded', async() => {
     cargarTabla( await traerClientes() );
+
+    const btnCrearCliente = document.querySelector('#btnCrearCliente');
+    btnCrearCliente.addEventListener('click', crearCliente);
 });
 
 
@@ -42,9 +50,7 @@ function cargarTabla( clientes ){
         // Creo una fila en la tabla
         const fila = document.createElement('tr');
         fila.classList.add('text-center');
-        // fila.dataset.cliente = clientes[i]._id;
         
-
         // Creo las celdas de cada value de cada cliente
         for (let j = 0; j <= Object.values(clientes[i]).length; j++) {
 
@@ -68,8 +74,10 @@ function cargarTabla( clientes ){
                 const btnEliminar = document.createElement('button');
                 btnEliminar.classList.add('btn', 'btn-sm', 'btn-danger');
                 btnEliminar.textContent = 'Eliminar';
+                btnEliminar.addEventListener('click', eliminarCliente);
                 btnEliminar.dataset.cliente = clientes[i]._id
 
+                celdaAcciones.classList.add('py-')
                 celdaAcciones.appendChild(btnEditar);
                 celdaAcciones.appendChild(btnEliminar);
                 fila.appendChild( celdaAcciones );
@@ -85,6 +93,8 @@ function cargarTabla( clientes ){
         tablaClientes.querySelector('tbody').appendChild(fila);
     }
 }
+
+
 
 function editarCliente(e) {
     const idCliente = e.target.getAttribute('data-cliente');
@@ -139,13 +149,39 @@ async function abrirModalEditar( idCliente ){
     formEditar.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        validarForm( formEditar, idCliente );
+        validarForm( formEditar, async () => {
+            const cambios = {
+                "nombre" : formEditar.querySelector('input#nombre').value,
+                "apellido" : formEditar.querySelector('input#apellido').value,
+                "telefono" : formEditar.querySelector('input#telefono').value  || '--',
+                "direccion" : formEditar.querySelector('input#direccion').value || '--'
+            }
+    
+            // Envio los cambios
+            const { resp, data : { clienteActualizado, msg } } = await actualizarDatosAPI('clientes', idCliente, cambios);
+            console.log(clienteActualizado);
+            
+            // muestro mensaje de exito o de fallo de la accion editar..
+            if( resp.status === 200 ){
+                mostrarMsj('success', msg, formEditar);
+            } else {
+                mostrarMsj('success', `No se pudo realizar la accion, debido al error: ${msg}`, formEditar);
+            }
+    
+            // cierro modal y sombra
+            setTimeout( async() => {
+                cerrarModal( modalEditar.id );
+                
+                limpiarContenidoTabla();
+                cargarTabla( await traerClientes() );
+            }, 1500);
+        } );
     });
 }
 
 
-async function validarForm( form, idCliente ) {
-    
+async function validarForm( form, callback ) {
+
     const nombre = form.querySelector('input#nombre').value;
     const apellido  = form.querySelector('input#apellido').value;
     const telefono  = form.querySelector('input#telefono').value  || '--';
@@ -156,32 +192,8 @@ async function validarForm( form, idCliente ) {
         mostrarMsj('danger', 'El campo nombre y apellido son obligatorios.', form);
         return;
     } else {
-        const cambios = {
-            nombre,
-            apellido,
-            telefono,
-            direccion
-        }
-
-        // Envio los cambios
-        const { resp, data : { clienteActualizado, msg } } = await actualizarDatosAPI('clientes', idCliente, cambios);
-        console.log(clienteActualizado);
-        
-        // muestro mensaje 
-        const modalActual = document.querySelector('div[id^="modal"]').id;
-        if( resp.status === 200 ){
-            mostrarMsj('success', msg, form);
-        } else {
-            mostrarMsj('success', `No se pudo realizar la accion, debido al error: ${msg}`, form);
-        }
-
-        // cierro modal y sombra
-        setTimeout( async() => {
-            cerrarModal(modalActual);
-            
-            limpiarContenidoTabla();
-            cargarTabla( await traerClientes() );
-        }, 1500);
+        callback();
+        return;
     }
 }
 
@@ -195,7 +207,7 @@ function limpiarContenidoTabla() {
 }
 
 async function traerClientes(){
-    const { resp, data: { clientes, totalClientes } } = await traerDatosAPI('clientes');
+    const { resp, data: { clientes, total } } = await traerDatosAPI('clientes');
 
     const clientesLimpios = clientes.map( cliente => {
         const { estado, ...resto } = cliente;
@@ -206,6 +218,95 @@ async function traerClientes(){
 }
 
 
+function crearCliente(){
+    abrirModalCrear();
+}
 
-// function abrirModalCrear(){}
+
+function abrirModalCrear(){
+    // Creo modal Editar
+    const modalCrear = crearModal('Crear', 'cliente'); 
+    const formCrear  = crearFormClientes();
+
+    // Inserto el formulario en el modal
+    modalCrear.querySelector('.modal-body').appendChild( formCrear );
+
+    // Inserto el modal antes de la etiqueta <script>
+    const body = document.querySelector('body');
+    body.insertBefore( modalCrear, document.querySelector('script') );
+
+    body.classList.add('modal-open');
+    body.style.overflow = 'hidden'; 
+    body.style.paddingRight = '17px'; 
+
+    // Creo la sombra o fondo negro detas del modal
+    const sombraModal = crearSombraModal();
+    body.appendChild( sombraModal );
+
+    // Cierro el modal si aprieta el btn cerrar o la sombraModal
+    document.querySelector('#btnCerrarModal').addEventListener('click', (e) => {
+        cerrarModal(modalCrear.id);
+    });
+
+    modalCrear.addEventListener('click', (e) => {
+        if( e.target === modalCrear ){
+            cerrarModal(e.target.id);
+        }
+    });
+
+    modalCrear.querySelector('#btnCancelar').addEventListener('click', (e) => {
+        cerrarModal( modalCrear.id );
+    });
+
+    formCrear.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        validarForm( formCrear, async() => {
+            const nuevoCliente = {
+                "nombre" : formCrear.querySelector('input#nombre').value,
+                "apellido" : formCrear.querySelector('input#apellido').value,
+                "telefono" : formCrear.querySelector('input#telefono').value  || '--',
+                "direccion" : formCrear.querySelector('input#direccion').value || '--'
+            }
+    
+            // Envio los cambios
+            const { resp, data : { msg } } = await enviarDatosAPI('clientes', nuevoCliente);
+            
+            // muestro mensaje de exito o de fallo de la accion editar..
+            if( resp.status === 200 ){
+                mostrarMsj('success', msg, formCrear);
+            } else {
+                mostrarMsj('success', `No se pudo realizar la accion, debido al error: ${msg}`, formCrear);
+            }
+    
+            // cierro modal y sombra
+            setTimeout( async() => {
+                cerrarModal( modalCrear.id );
+
+                limpiarContenidoTabla();
+                cargarTabla( await traerClientes() );
+            }, 1500);
+        });
+    });
+}
+
+async function eliminarCliente(e) {
+    const idCliente = e.target.getAttribute('data-cliente');
+    
+    const confirmEliminarCliente = confirm('¿Esta seguro de eliminar este cliente?');
+    if( confirmEliminarCliente ){
+        const { resp, data : { msg } } = await eliminarDatosAPI('clientes', idCliente);
+        const blockAlerta = document.querySelector('#alerta');
+        if( resp.status === 200 ){
+            mostrarMsj( 'success', msg, blockAlerta );
+
+            setTimeout( async() => {
+                limpiarContenidoTabla();
+                cargarTabla( await traerClientes() );
+            }, 1200);
+        } else {
+            mostrarMsj( 'danger', 'No se pudo borrar el cliente, intente de nuevo', blockAlerta );
+        }
+    }
+}
 

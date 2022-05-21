@@ -28,6 +28,12 @@ const calcularDeudaTotal2 = ( historial ) => {
         aFavorTotal = aFavor.reduce( (acum, deuda) => acum + deuda.precio, 0);
     });
 
+    console.log({
+        enContraTotal,
+        aFavorTotal,
+        "total": enContraTotal - aFavorTotal
+    });
+    
     return enContraTotal - aFavorTotal;
 }
 

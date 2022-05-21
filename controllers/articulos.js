@@ -12,6 +12,7 @@ const obtenerArticulos = async( req, res = response ) => {
         Articulo.find( queryActivos )
                 .limit( Number(limite) )
                 .skip( Number(desde) )
+                .sort({ _id: 'desc' })
     ]);
 
     res.json({ 
@@ -51,7 +52,7 @@ const modificarArticulo = async( req, res = response ) => {
     const { id } = req.params;
     const { ...cambios } = req.body;
 
-    const articuloActualizado = await Articulo.findByIdAndUpdate( id, cambios );
+    const articuloActualizado = await Articulo.findByIdAndUpdate( id, cambios, { new: true } );
 
     res.json({ 
         msg: `Articulo MODIFICADO ${id} exitosamente`,

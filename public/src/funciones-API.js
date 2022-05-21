@@ -4,7 +4,7 @@ import { verificarToken, eliminarToken, redireccionar } from './funciones.js'
 
 
 
-export async function traerDatosAPI( controller, limite = 5, desde = 0 ) {
+export async function traerDatosAPI( controller, limite = 100, desde = 0 ) {
     const resp = await fetch(`${URL}/api/${controller}?limite=${limite}&desde=${desde}`);
     const data = await resp.json();
 
@@ -24,6 +24,33 @@ export async function actualizarDatosAPI( controller = '', id = '', cambios ){
     const resp = await fetch(`${URL}/api/${controller}/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cambios),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    const data = await resp.json();
+
+    return { resp, data };
+}
+
+export async function eliminarDatosAPI( controller = '', id = '' ){
+    const resp = await fetch(`${URL}/api/${controller}/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    const data = await resp.json();
+
+    return { resp, data };
+}
+
+export async function enviarDatosAPI( controller = '', datos ){
+    const resp = await fetch(`${URL}/api/${controller}`, {
+        method: 'POST',
+        body: JSON.stringify(datos),
         headers: {
             'Content-Type': 'application/json'
         }

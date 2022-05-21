@@ -14,6 +14,9 @@
     <title> kioscoAnahi | Clientes </title>
 </head>
 <body>
+  <style>
+    html { overflow-y: scroll; }
+  </style>
     <div class="container-fluid">
         <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom px-5">
           <a href="/" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
@@ -36,7 +39,11 @@
     <main class="container mt-5 justify-content-md-center">
       <h1 class="bg-success text-light text-center">CLIENTES</h1>
 
-      <button id="btnCrearCliente" class="btn btn-primary my-3">Crear cliente</button>
+      <div class="container justify-content-center">
+        <button id="btnCrearCliente" class="btn btn-primary my-3 justify-content-center">Crear cliente</button>
+      </div>
+
+      <div id="alerta"></div>
 
       <div class="table-responsive">
         <table id="clientes"class="table table-success table-hover table-bordered table-sm align-middle">
@@ -55,7 +62,7 @@
       </div>
     </main>
 
-    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
     <script src="../src/clientes.js" type="module"></script>
 </body>
 </html>

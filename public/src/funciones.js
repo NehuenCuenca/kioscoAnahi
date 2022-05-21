@@ -74,6 +74,12 @@ export function validarInputString(input) {
 }
 
 
+export function traerFecha(){
+    const hoy = new Date();
+
+    const fechaFormateada = `${hoy.getDate()}-${hoy.getMonth()+1}-${hoy.getFullYear()} ${hoy.getHours()}:${hoy.getMinutes()}`;
+    return fechaFormateada;
+}
 
 
 

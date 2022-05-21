@@ -12,6 +12,7 @@ const obtenerProveedores = async( req, res = response ) => {
         Proveedor.find( queryActivos )
                 .limit( Number(limite) )
                 .skip( Number(desde) )
+                .sort({ _id: 'desc' })
     ]);
 
     res.json({ 
@@ -59,7 +60,7 @@ const modificarProveedor = async( req, res = response ) => {
     const { id } = req.params;
     const { ...cambios } = req.body;
 
-    const proveedorActualizado = await Proveedor.findByIdAndUpdate( id, cambios );
+    const proveedorActualizado = await Proveedor.findByIdAndUpdate( id, cambios, { new: true } );
 
     res.json({ 
         msg: `Proveedor MODIFICADO ${id} exitosamente`,

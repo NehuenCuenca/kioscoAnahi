@@ -26,6 +26,7 @@ const obtenerDeudores = async( req, res = response ) => {
                 })
                 .limit( Number(limite) )
                 .skip( Number(desde) )
+                .sort({ _id: 'desc' })
     ]);
 
     res.json({ 
@@ -80,12 +81,11 @@ const modificarDeudor = async( req, res = response ) => {
     const { historial } = req.body;
 
     const cambios = Object.assign(req.body);
-    console.log(cambios)
 
-    let deudaTotal = calcularDeudaTotal( historial );
+    let deudaTotal = calcularDeudaTotal2( historial );
     cambios.deudaTotal = deudaTotal;
 
-    const deudorActualizado = await Deudor.findByIdAndUpdate( id, cambios );
+    const deudorActualizado = await Deudor.findByIdAndUpdate( id, cambios, { new: true } );
 
     res.json({ 
         msg: `Deudor MODIFICADO ${id} exitosamente`,
