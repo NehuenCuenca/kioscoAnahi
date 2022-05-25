@@ -48,11 +48,13 @@ export async function eliminarDatosAPI( controller = '', id = '' ){
 }
 
 export async function enviarDatosAPI( controller = '', datos ){
+    const token = localStorage.getItem('x-token');
     const resp = await fetch(`${URL}/api/${controller}`, {
         method: 'POST',
         body: JSON.stringify(datos),
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-token' : token
         }
     });
 

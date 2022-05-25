@@ -77,7 +77,7 @@ function cargarTabla( clientes ){
                 btnEliminar.addEventListener('click', eliminarCliente);
                 btnEliminar.dataset.cliente = clientes[i]._id
 
-                celdaAcciones.classList.add('py-')
+                celdaAcciones.classList.add('col-2', 'py-2', 'justify-content-around')
                 celdaAcciones.appendChild(btnEditar);
                 celdaAcciones.appendChild(btnEliminar);
                 fila.appendChild( celdaAcciones );

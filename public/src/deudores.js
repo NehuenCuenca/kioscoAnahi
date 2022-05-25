@@ -1,14 +1,14 @@
 
-import { cerrarSesion, traerDatosAPI, traerDatosPorIdAPI } from './funciones-API.js';
+import { cerrarSesion, enviarDatosAPI, traerDatosAPI, traerDatosPorIdAPI } from './funciones-API.js';
 
 import { 
     crearModal,
     crearSombraModal,
     cerrarModal,
-    crearBlockDeuda,
-    crearBlockDeudaNueva,
+    crearColumnasDeudas,
     cargarSelectClientes,
-    cargarSelectArticulos
+    cargarSelectArticulos,
+    sumarArticuloDeuda
 } from './funciones-UI.js';
 
 import { traerFecha } from './funciones.js';
@@ -37,13 +37,16 @@ async function traerDeudores(){
 function imprimirDeudores(total, deudores) {
     deudores.forEach( (deudor,i) => {
         const { cliente : { nombre, apellido }, deudaTotal, _id } = deudor;
+        const nombreDeudorCompleto = `${nombre.toUpperCase()} ${apellido.toUpperCase()}`;
         const blockDeudores = document.querySelector('#blockDeudores');
-        
+
+        const colorTotal = (deudaTotal > 0) ? 'text-danger' : 'text-success';
+
         const blockDeuda = document.createElement('div');
         blockDeuda.classList.add('row', 'my-3');
         blockDeuda.innerHTML = `
-            <h1 class="col col-8"> ${nombre.toUpperCase()} ${apellido.toUpperCase()}</h1>
-            <h4 class="col col-4"> Total: ${deudaTotal}</h4>
+            <h1 class="col col-8"> ${nombreDeudorCompleto}</h1>
+            <h4 class="col col-4 ${colorTotal}"> Total: ${deudaTotal}</h4>
             <button type="button" id="btnVerDeudas${i}" data-deuda="${_id}" class="btn btn-info text-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                 Ver deudas
             </button>
@@ -55,31 +58,38 @@ function imprimirDeudores(total, deudores) {
 
             const deudorId = e.target.getAttribute('data-deuda');
 
-            const { resp, data: { deudor : { historial }} } = await traerDatosPorIdAPI('deudores', deudorId);
+            const { resp, data: { deudor : { historial } } } = await traerDatosPorIdAPI('deudores', deudorId);            
 
-            const modalDeudor = crearModal('', `${ nombre } ${apellido}`);
+            const modalDeudor = crearModal(`${ nombreDeudorCompleto }`);
             modalDeudor.id = 'consultarDeudor';
             modalDeudor.querySelector('.modal-dialog').classList.add('modal-xl');
-
-
 
             historial.forEach((deuda) => {
                 const { aFavor, enContra } = deuda; 
 
-                const blockDeuda = crearBlockDeuda();
+                const blockDeuda = crearColumnasDeudas();
 
-                const fechaDeuda  = blockDeuda.querySelector('#fechaDeuda');
-                const aFavorBlock = blockDeuda.querySelector('#aFavor');
-                const enContraBlock = blockDeuda.querySelector('#enContra');
+                // Borro botones y selects...
+                blockDeuda.querySelector('#blockCliente').remove();
+                blockDeuda.querySelector('#btnGuardarDeuda').remove();
+                blockDeuda.querySelector('#btnSumarArticuloEnContra').parentElement.remove();
+                blockDeuda.querySelector('#btnSumarArticuloAFavor').parentElement.remove();
 
-                fechaDeuda.textContent = `${deuda.fecha}`;
-                for (let k = 0; k < aFavor.length; k++) {
-                    aFavorBlock.textContent += `${aFavor[k].articulo.nombre} ($${aFavor[k].precio}), `;                    
-                }
                 
-                for (let j = 0; j < enContra.length; j++) {
-                    enContraBlock.textContent += `${enContra[j].articulo.nombre} ($${enContra[j].precio}), `;                    
-                }
+                const enContraBlock = blockDeuda.querySelector('#blockEnContra');
+                const aFavorBlock = blockDeuda.querySelector('#blockAFavor');
+                const contenidoColumna = document.createElement('div');
+                contenidoColumna.classList.add('row', 'col', 'justify-content-center', 'p-2');
+                contenidoColumna.id = "contenidoColumna"
+                    
+                enContraBlock.appendChild(contenidoColumna);
+                aFavorBlock.appendChild(contenidoColumna.cloneNode(true));
+
+                const contenidoEnContra = enContraBlock.querySelector('#contenidoColumna')
+                const contenidoAFavor = aFavorBlock.querySelector('#contenidoColumna')
+
+                imprimirDeuda(contenidoEnContra, enContra);
+                imprimirDeuda(contenidoAFavor, aFavor);
 
                 modalDeudor.querySelector('.modal-body').appendChild( blockDeuda );
             });
@@ -116,6 +126,19 @@ function imprimirDeudores(total, deudores) {
 }
 
 
+function imprimirDeuda(columna, arrDeudas){
+    console.log(arrDeudas)
+
+    for (let i = 0; i < arrDeudas.length; i++) {
+        const { articulo : {nombre}, precio } = arrDeudas[i]; 
+        
+        const filaArticulo = document.createElement('div');
+        filaArticulo.classList.add('row', 'justify-content-center');
+        filaArticulo.textContent = `${nombre} ($${precio})`;
+        columna.appendChild(filaArticulo);
+    }
+}
+
 
 function registrarEventListeners(){
     btnLogout.addEventListener('click', cerrarSesion);
@@ -131,16 +154,38 @@ async function abrirModalCrearDeudor() {
     modalCrearDeudor.id = 'crearDeudor';
     modalCrearDeudor.querySelector('.modal-dialog').classList.add('modal-xl');
 
-    const deudaNueva = crearBlockDeudaNueva();
-    deudaNueva.querySelector('#btnBorrarArticulo').remove();
+    const deudaNueva = crearColumnasDeudas();
     modalCrearDeudor.querySelector('.modal-body').appendChild(deudaNueva);
-
+    
     cargarSelectClientes( modalCrearDeudor.querySelector('#listaClientes'), await traerClientes() );
-    cargarSelectArticulos( modalCrearDeudor.querySelector('#listaArticulo'), await traerArticulos() );
+    const columnaEnContra = modalCrearDeudor.querySelector('#blockEnContra')
+    const columnaAFavor = modalCrearDeudor.querySelector('#blockAFavor')
 
-    const btnSumarArticulo = deudaNueva.querySelector('#btnSumarArticulo');
-    btnSumarArticulo.addEventListener('click', (e) => {
-        sumarOtroArticulo(e.target);
+    // BTN SUMAR ARTICULO EN CONTRA
+    const btnSumarArticuloEnContra = deudaNueva.querySelector('#btnSumarArticuloEnContra');
+    btnSumarArticuloEnContra.addEventListener('click', async(e) => {
+        sumarArticuloDeuda( columnaEnContra );
+        const ultimoBloqueArticulo = columnaEnContra.querySelector('div[id^="blockArticuloDeuda"]:last-child');
+
+        const ultimoSelect = ultimoBloqueArticulo.querySelector('select#listaArticulo');
+        cargarSelectArticulos( ultimoSelect, await traerArticulos() ); 
+
+        ultimoBloqueArticulo.querySelector('#btnBorrarArticulo').addEventListener('click', (e) => {
+            ultimoBloqueArticulo.remove();
+        })
+    });
+
+    // BTN SUMAR ARTICULO A FAVOR
+    const btnSumarArticuloAFavor = deudaNueva.querySelector('#btnSumarArticuloAFavor');
+    btnSumarArticuloAFavor.addEventListener('click', async(e) => {
+        sumarArticuloDeuda( columnaAFavor );
+        const ultimoBloqueArticulo = columnaAFavor.querySelector('div[id^="blockArticuloDeuda"]:last-child');
+        const ultimoSelect = ultimoBloqueArticulo.querySelector('select#listaArticulo');
+        cargarSelectArticulos( ultimoSelect, await traerArticulos() ); 
+
+        ultimoBloqueArticulo.querySelector('#btnBorrarArticulo').addEventListener('click', (e) => {
+            ultimoBloqueArticulo.remove();
+        })
     });
 
     const btnGuardarDeuda = deudaNueva.querySelector('#btnGuardarDeuda');
@@ -174,13 +219,15 @@ async function sumarOtroArticulo( btnSumarViejo ) {
     // btnSumarViejo.parentElement.remove(); //elimino el btn clickeado
 
     const bodyModal = document.querySelector('.modal-body'); 
-    const blockCrearDeuda = bodyModal.querySelector('#blockCrearDeuda')
+    // const blockCrearDeuda = bodyModal.querySelector('#blockCrearDeuda');
+    const blockCrearDeuda = bodyModal.querySelector('#listaArticuloDeudas');
 
-    const blockNuevoArticulo = crearBlockDeudaNueva().querySelector('#blockArticuloDeuda'); //creo otro bloque para sumar otro articulo
+    const blockNuevoArticulo = crearColumnasDeudas().querySelector('#blockArticuloDeuda'); //creo otro bloque para sumar otro articulo
     // blockNuevoArticulo.id += bodyModal.querySelectorAll('[id^="blockArticuloDeuda"]').length;
     cargarSelectArticulos( blockNuevoArticulo.querySelector('#listaArticulo'), await traerArticulos() );
     
-    blockCrearDeuda.insertBefore( blockNuevoArticulo, btnSumarViejo.parentElement ); //Agrego el bloque nuevo al Modal
+    // blockCrearDeuda.insertBefore( blockNuevoArticulo, btnSumarViejo.parentElement ); //Agrego el bloque nuevo al Modal
+    blockCrearDeuda.appendChild(blockNuevoArticulo);
 
     blockNuevoArticulo.querySelector('button#btnBorrarArticulo').addEventListener('click', (e) => {
         blockNuevoArticulo.remove();
@@ -189,16 +236,12 @@ async function sumarOtroArticulo( btnSumarViejo ) {
 
 function guardarDeuda(){
     const bodyModal = document.querySelector('.modal-body');
-
-    // Deshabilito boton de sumar articulo
-    const btnSumarArticulo = bodyModal.querySelector('#btnSumarArticulo');
-    btnSumarArticulo.disabled = true;
     
     // Obtener los valores de los inputs
     const objDeuda = guardarValores(bodyModal);
 
     // VALIDAR LOS valores de los inputs
-    validarDeuda(objDeuda);
+    validarDeuda( objDeuda );
 
     // GUARDAR LOS VALORES SI ESTA TODO COMPLETO
 
@@ -211,47 +254,91 @@ function guardarDeuda(){
 }
 
 function guardarValores(modal){
-
     const cliente = modal.querySelector('#listaClientes').value || modal.querySelector('#inputCliente').value;
+    
+    const articulosEnContra = Array.from( modal.querySelectorAll('#blockEnContra > div[id^="blockArticuloDeuda"]') );
+    const articulosAFavor = Array.from( modal.querySelectorAll('#blockAFavor > div[id^="blockArticuloDeuda"]') );
 
-    const blocksArticulos = Array.from( modal.querySelectorAll('#blockArticuloDeuda') );
-    const arrArticulosAdeudados = [];
+    // FN que crea un arreglo con los valores de cada tipo de deuda
+    const mapearValores = (arrValores = []) => {
+        let valoresMapeados = [];
 
-    for (let i = 0; i < blocksArticulos.length; i++) {
-        const blockArticulo = blocksArticulos[i];
-
-        const articuloDeuda = {
-            "articulo": blockArticulo.querySelector('#listaArticulo').value || blockArticulo.querySelector('#articuloDeuda').value,
-            "precio": blockArticulo.querySelector('#precioArticulo').value,
-            "tipoDeuda": blockArticulo.querySelector('#selectDeuda').value
+        for (let i = 0; i < arrValores.length; i++) {
+            const blockArticulo = arrValores[i];
+    
+            const articuloDeuda = {
+                "articulo": blockArticulo.querySelector('#listaArticulo').value || blockArticulo.querySelector('#articuloDeuda').value,
+                "precio": Number( blockArticulo.querySelector('#precioArticulo').value )
+            }
+    
+            valoresMapeados = [...valoresMapeados ,articuloDeuda ];
         }
 
-        arrArticulosAdeudados.push( articuloDeuda );
+        return valoresMapeados;
     }
-
 
     const objDeuda = {
         cliente,
         "historial": [{
-            "enContra": arrArticulosAdeudados.filter(deuda => deuda.tipoDeuda === 'enContra').map(deuda => {
-                delete deuda['tipoDeuda'];
-                return deuda;
-            }),
-            "aFavor": arrArticulosAdeudados.filter(deuda => deuda.tipoDeuda === 'aFavor').map(deuda => {
-                delete deuda['tipoDeuda'];
-                return deuda;
-            }),
+            "enContra": mapearValores(articulosEnContra) || [],
+            "aFavor": mapearValores(articulosAFavor) || [],
             "fecha": traerFecha()
         }]
     }
-    
 
     return objDeuda;
 }
 
-function validarDeuda(deuda) {
-    console.log(deuda)
+
+async function validarDeuda(deuda) {
+    const { cliente, historial } = deuda;
+    const [ {enContra, aFavor} ] = historial;
+
+    // verifico que el cliente no este vacio
+    if( cliente.trim().length === 0){
+        return alert('El campo nombre es obligatorio');
+    }
+   
+    // guardo el indice (si existe) del primer elemento que este incompleto, de cada uno de los arrays
+    const articuloVacioEnContra = validarArticulos(enContra);
+    const articuloVacioAFavor = validarArticulos(aFavor);
+
+    // Si alguno de los 2 arrays tiene un elemento incompleto, entonces true.. sino false
+    const existeArticuloVacio = (articuloVacioEnContra > -1) || (articuloVacioAFavor > -1) ;
+
+    if( existeArticuloVacio ){
+        if( articuloVacioEnContra > -1 ){
+            return alert(`El articulo nro ${articuloVacioEnContra+1} de la seccion EN CONTRA, esta incompleto, asegurese de completarlo.`);
+        } else if( articuloVacioAFavor > -1 ){
+            return alert(`El articulo nro ${articuloVacioAFavor+1} de la seccion A FAVOR, esta incompleto, asegurese de completa el nombre y un precio respectivo.`);
+        } 
+    } else {
+        // Si esta todo completo, guardo la deuda en la BD
+        try {
+            const {resp, data} = await enviarDatosAPI('deudores', deuda);
+            if(resp.status === 200){
+                console.log('Se guardó el deudor exitosamente')
+                cerrarModal('crearDeudor');
+            }
+        } catch (error) {
+            console.log('No se pudo guardar el deudor, razon: ', error);
+            alert(error);
+        }
+    }
 }
+
+
+// Retorno el index del primer articulo especificado en la deuda que no tenga especificado su nombre o precio
+function validarArticulos(arrArticulos){
+    return arrArticulos.findIndex( art => {
+        const { articulo, precio } = art;
+
+        if( !articulo || !precio || precio === 0){
+            return art;
+        }
+    });
+}
+
 
 async function traerClientes(){
     const { resp, data: { clientes } } = await traerDatosAPI('clientes');
@@ -263,6 +350,7 @@ async function traerClientes(){
 
     return clientesLimpios;
 }
+
 
 async function traerArticulos(){
     const { resp, data: { articulos } } = await traerDatosAPI('articulos');
