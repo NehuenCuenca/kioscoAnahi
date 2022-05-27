@@ -35,10 +35,12 @@ export async function actualizarDatosAPI( controller = '', id = '', cambios ){
 }
 
 export async function eliminarDatosAPI( controller = '', id = '' ){
+    const token = localStorage.getItem('x-token');
     const resp = await fetch(`${URL}/api/${controller}/${id}`, {
         method: 'DELETE',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-token' : token
         }
     });
 

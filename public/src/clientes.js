@@ -105,7 +105,13 @@ function editarCliente(e) {
 
 async function abrirModalEditar( idCliente ){
     // Creo modal Editar
-    const modalEditar = crearModal('Editar', 'clientes'); 
+    const paramsModalEditarCliente = {
+        "idModal": 'editarCliente',
+        "accion": `Editar`,
+        "coleccion": 'Cliente',
+        "size": 'modal-lg',
+    }
+    const modalEditar = crearModal(paramsModalEditarCliente); 
     const formEditar  = crearFormClientes();
 
     // campos a llenar con los datos de un cliente a modificar
@@ -117,30 +123,6 @@ async function abrirModalEditar( idCliente ){
 
     // Inserto el formulario en el modal
     modalEditar.querySelector('.modal-body').appendChild( formEditar );
-    
-
-    // Inserto el modal antes de la etiqueta <script>
-    const body = document.querySelector('body');
-    body.insertBefore( modalEditar, document.querySelector('script') );
-
-    body.classList.add('modal-open');
-    body.style.overflow = 'hidden'; 
-    body.style.paddingRight = '17px'; 
-
-    // Creo la sombra o fondo negro detas del modal
-    const sombraModal = crearSombraModal();
-    body.appendChild( sombraModal );
-
-    // Cierro el modal si aprieta el btn cerrar o la sombraModal
-    document.querySelector('#btnCerrarModal').addEventListener('click', (e) => {
-        cerrarModal(modalEditar.id);
-    });
-
-    modalEditar.addEventListener('click', (e) => {
-        if( e.target === modalEditar ){
-            cerrarModal(e.target.id);
-        }
-    });
 
     modalEditar.querySelector('#btnCancelar').addEventListener('click', (e) => {
         cerrarModal(modalEditar.id);
@@ -218,41 +200,21 @@ async function traerClientes(){
 }
 
 
+
 function crearCliente(){
-    abrirModalCrear();
-}
-
-
-function abrirModalCrear(){
     // Creo modal Editar
-    const modalCrear = crearModal('Crear', 'cliente'); 
+    const paramsModalCrearCliente = {
+        "idModal": 'crearCliente',
+        "accion": `Crear`,
+        "coleccion": 'Cliente',
+        "size": 'modal-xl',
+    }
+    const modalCrear = crearModal(paramsModalCrearCliente); 
     const formCrear  = crearFormClientes();
 
     // Inserto el formulario en el modal
     modalCrear.querySelector('.modal-body').appendChild( formCrear );
-
-    // Inserto el modal antes de la etiqueta <script>
-    const body = document.querySelector('body');
-    body.insertBefore( modalCrear, document.querySelector('script') );
-
-    body.classList.add('modal-open');
-    body.style.overflow = 'hidden'; 
-    body.style.paddingRight = '17px'; 
-
-    // Creo la sombra o fondo negro detas del modal
-    const sombraModal = crearSombraModal();
-    body.appendChild( sombraModal );
-
-    // Cierro el modal si aprieta el btn cerrar o la sombraModal
-    document.querySelector('#btnCerrarModal').addEventListener('click', (e) => {
-        cerrarModal(modalCrear.id);
-    });
-
-    modalCrear.addEventListener('click', (e) => {
-        if( e.target === modalCrear ){
-            cerrarModal(e.target.id);
-        }
-    });
+    
 
     modalCrear.querySelector('#btnCancelar').addEventListener('click', (e) => {
         cerrarModal( modalCrear.id );

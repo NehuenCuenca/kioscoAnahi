@@ -1,6 +1,13 @@
-export function crearModal( accion, coleccion = '' ){
+export function crearModal( paramsModal ){
+    const { 
+        idModal = '',
+        accion = '', 
+        coleccion = '',
+        size = 'modal-xl'
+    } = paramsModal;
+
     const modal = document.createElement('div');
-    modal.id = `modal${accion}`;
+    modal.id = idModal;
     modal.classList.add('modal', 'fade', 'show');
     modal.style.display = 'block';
     modal.role = 'dialog';
@@ -12,7 +19,7 @@ export function crearModal( accion, coleccion = '' ){
                     <h5 class="modal-title" id="modal${accion}">${accion} ${coleccion}</h5>
                 </div>
 
-                <div class="modal-body"></div>
+                <div class="modal-body row justify-content-center px-4"></div>
 
                 <div class="modal-footer align-items-center justify-content-center">
                     <button type="button" id="btnCerrarModal" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -21,6 +28,29 @@ export function crearModal( accion, coleccion = '' ){
         </div>
     `;
     
+    modal.querySelector('.modal-dialog').classList.add(size);
+
+    const body = document.querySelector('body');
+    body.insertBefore( modal, document.querySelector('script') );
+    
+    body.classList.add('modal-open');
+    body.style.overflow = 'hidden'; 
+    body.style.paddingRight = '17px'; 
+
+    const sombraModal = crearSombraModal();
+    body.appendChild( sombraModal );
+    
+    // Cierro el modal si aprieta el btn cerrar o la sombraModal
+    modal.querySelector('#btnCerrarModal').addEventListener('click', (e) => {
+        cerrarModal(modal.id);
+    })
+
+    modal.addEventListener('click', (e) => {
+        if( e.target === modal ){
+            cerrarModal(e.target.id);
+        }
+    });
+
     return modal;
 }
 
@@ -45,31 +75,31 @@ export function crearFormClientes(){
     const form = document.createElement('form');
 
     form.innerHTML += `
-        <div class="row justify-content-md-center my-3">
-            <div class="col-md-6 mb-3">
+        <div class="row justify-content-md-around my-3">
+            <div class="col-md-4 mb-3">
                 <label for="nombre" class="form-label fw-bold">Nombre</label>
                 <input type="text" class="form-control" id="nombre" placeholder="Nombre del cliente">
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-3">
                 <label for="apellido" class="form-label fw-bold">Apellido</label>
                 <input type="text" class="form-control" id="apellido" placeholder="Apellido del cliente">
             </div>
         </div>
-        <div class="row justify-content-md-center my-3">
-            <div class="col-md-6 mb-3">
+        <div class="row justify-content-md-around my-3">
+            <div class="col-md-4 mb-3">
                 <label for="telefono" class="form-label fw-bold">Telefono</label>
                 <input type="text" class="form-control" id="telefono" placeholder="Telefono o celular">
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-3">
                 <label for="direccion" class="form-label fw-bold">Direccion</label>
                 <input type="text" class="form-control" id="direccion" placeholder="Direccion o domicilio">
             </div>
         </div>
         
-        <div class="row justify-content-md-center my-2">
-            <div class="col-md-5 justify-content-between">
-                <button id="btnGuardar" type="submit "class="btn btn-success"> Guardar </button>
-                <button id="btnCancelar" class="btn btn-danger"> Cancelar </button>
+        <div class="row justify-content-center">
+            <div class="row col-4 justify-content-between">
+                <button id="btnGuardar" type="submit "class="btn btn-success col-5"> Guardar </button>
+                <button id="btnCancelar" class="btn btn-danger col-5"> Cancelar </button>
             </div>
         </div>
     `;
@@ -123,21 +153,21 @@ export function crearColumnasDeudas() {
 
     blockCrearDeuda.innerHTML = `
         <div id="blockCliente" class="row col-4 my-3 justify-content-center">
-            <select id="listaClientes" class="row">
+            <select id="listaClientes" class="row form-select form-select-lg">
                 <option value="" selected>Seleccione un cliente</option>
             </select>
-            <input type="text"  id="inputCliente" class="row" placeholder="Si no existe en la lista, crea uno nuevo aca..">
+            <input type="text" id="inputCliente" class="row form-control" placeholder="Si no existe en la lista, crea uno nuevo aca..">
         </div>
 
         <div class="row col-12 justify-content-around">
-            <div class="col-5 bg-danger mh-auto" id="blockEnContra">
+            <div class="col-5 bg-danger mh-auto border border-2 border-dark rounded p-3" id="blockEnContra">
                 EN CONTRA
                 <div class="row col py-3 justify-content-center">
                     <button id="btnSumarArticuloEnContra" class="btn btn-primary col-6"> Sumar articulo </button>
                 </div>
             </div>
 
-            <div class="col-5 bg-success mh-auto" id="blockAFavor">
+            <div class="col-5 bg-success mh-auto border border-2 border-dark rounded p-3" id="blockAFavor">
                 A FAVOR
                 <div class="row col py-3 my-1 justify-content-center">
                     <button id="btnSumarArticuloAFavor" class="btn btn-primary col-6"> Sumar articulo </button>
@@ -162,15 +192,15 @@ export function sumarArticuloDeuda( columna ) {
     blockNuevoArticuloDeuda.id = `blockArticuloDeuda${nroArticuloDeuda}`;
 
     blockNuevoArticuloDeuda.innerHTML += `
-        <div class="row col-5 justify-content-center bg-primary">
-            <select id="listaArticulo"  class="row col-12">
+        <div class="row col-6 justify-content-center">
+            <select id="listaArticulo" class="row col-12 form-select form-select-sm">
                 <option value="">Seleccione un articulo</option>
             </select>
-            <input type="text" id="articuloDeuda" class="row col-12" placeholder="Si no existe en la lista, crea uno nuevo aca..">
+            <input type="text" id="articuloDeuda" class="row col-12 form-control form-control-sm" placeholder="Si no existe en la lista, crea uno nuevo aca..">
         </div>
 
-        <div class="col-3 bg-success d-flex align-items-center justify-content-center">
-            <input type="number" placeholder="Precio" id="precioArticulo" class="col-12" min="0">
+        <div class="col-4 d-flex align-items-center justify-content-center">
+            <input type="number" placeholder="Precio" id="precioArticulo" class="col-12 form-control form-control-md" min="0">
         </div>
 
         <div class="col-1 d-flex align-items-center justify-content-center">
@@ -209,4 +239,43 @@ export function cargarSelectArticulos( select, articulos ){
     }
 
     return;
+}
+
+export function crearBtnsAccionesDeuda(id = '') {
+    const filaBtns = document.createElement('div'); 
+    filaBtns.classList.add('row','col-8', 'justify-content-around');
+
+    filaBtns.innerHTML += ` 
+            <button id="btnEditarDeuda" data-deuda="${id}" class="col-3 btn btn-info fw-bold border border-dark border-1 rounded">Editar deuda</button>
+            <button id="btnSaldarDeuda" data-deuda="${id}" class="col-3 btn btn-warning fw-bold border border-dark border-1 rounded">Saldar deuda</button>
+    `;
+
+    function deshabilitarBotones(e) {
+        const totalBtns = Array.from( filaBtns.querySelectorAll('button') );
+
+        const hayDeshabilitados = Boolean( Array.from(filaBtns.querySelectorAll('button:disabled')).length > 0 );
+        if( hayDeshabilitados ){
+            for (let i = 0; i < totalBtns.length; i++) {
+                const btn = totalBtns[i];
+                btn.disabled = false;
+            }
+
+            return;
+        }
+
+        for (let i = 0; i < totalBtns.length; i++) {
+            const btn = totalBtns[i];
+            if( btn.id !== e.target.id ){
+                btn.disabled = true;
+            } 
+        }
+    }
+
+    const btnEditarDeuda= filaBtns.querySelector('#btnEditarDeuda');
+    const btnSaldarDeuda= filaBtns.querySelector('#btnSaldarDeuda');
+
+    btnEditarDeuda.addEventListener('click', deshabilitarBotones);
+    btnSaldarDeuda.addEventListener('click', deshabilitarBotones);
+
+    return filaBtns;
 }
