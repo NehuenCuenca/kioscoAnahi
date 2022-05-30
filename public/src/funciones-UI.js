@@ -1,3 +1,5 @@
+
+
 export function crearModal( paramsModal ){
     const { 
         idModal = '',
@@ -147,7 +149,7 @@ export function llenarForm( form, camposAllenar = [], valores ){
 
 // TODO: REHACER
 export function crearColumnasDeudas() {
-    const blockCrearDeuda = document.createElement('div');
+    const blockCrearDeuda = document.createElement('form');
     blockCrearDeuda.classList.add('row', 'my-3', 'justify-content-around', 'p-2', 'row', 'col-12', 'text-center', 'justify-content-center', 'border', 'border-secondary', 'p-2', 'text-white');
     blockCrearDeuda.id = 'blockCrearDeuda';
 
@@ -159,11 +161,13 @@ export function crearColumnasDeudas() {
             <input type="text" id="inputCliente" class="row form-control" placeholder="Si no existe en la lista, crea uno nuevo aca..">
         </div>
 
+        
         <div class="row col-12 justify-content-around">
             <div class="col-5 bg-danger mh-auto border border-2 border-dark rounded p-3" id="blockEnContra">
                 EN CONTRA
                 <div class="row col py-3 justify-content-center">
                     <button id="btnSumarArticuloEnContra" class="btn btn-primary col-6"> Sumar articulo </button>
+                    <div id="contenidoColumna" class="row col-12 justify-content-center p-2"></div>
                 </div>
             </div>
 
@@ -171,24 +175,25 @@ export function crearColumnasDeudas() {
                 A FAVOR
                 <div class="row col py-3 my-1 justify-content-center">
                     <button id="btnSumarArticuloAFavor" class="btn btn-primary col-6"> Sumar articulo </button>
+                    <div id="contenidoColumna" class="col-12 justify-content-center p-2"></div>
                 </div>
             </div>
         </div>
 
         <div id="btnGuardarDeuda" class="row col-4 my-3 justify-content-center">
-          <button class="btn btn-success">Guardar</button>
+            <button class="btn btn-success">Guardar</button>
         </div>
     `;
-    
+
     return blockCrearDeuda;
 }
 
 
-export function sumarArticuloDeuda( columna ) {
+export function sumarArticuloDeuda( contenidocolumna ) {
     const blockNuevoArticuloDeuda = document.createElement('div');
     blockNuevoArticuloDeuda.classList.add('row', 'my-3', 'justify-content-around', 'p-2');
 
-    const nroArticuloDeuda = Array.from( columna.querySelectorAll('div[id^="blockArticuloDeuda"]') ).length;
+    const nroArticuloDeuda = Array.from( contenidocolumna.querySelectorAll('div[id^="blockArticuloDeuda"]') ).length;
     blockNuevoArticuloDeuda.id = `blockArticuloDeuda${nroArticuloDeuda}`;
 
     blockNuevoArticuloDeuda.innerHTML += `
@@ -207,8 +212,32 @@ export function sumarArticuloDeuda( columna ) {
             <button id="btnBorrarArticulo" class="btn btn-dark col"> X </button>
         </div>
     `;
+    
+    blockNuevoArticuloDeuda.querySelector('#btnBorrarArticulo').addEventListener('click', () => {
+        blockNuevoArticuloDeuda.remove();
+    })
+    
+    contenidocolumna.appendChild( blockNuevoArticuloDeuda );
+}
 
-    columna.appendChild( blockNuevoArticuloDeuda );
+
+// Por bloque de articulo  (requiere bucle), deshabilito los inputs y selects
+export function habilitarBloqueArticulo(bloqueArticulo, bool){
+    if(!bloqueArticulo){return}
+    const selectNombreArticulo = bloqueArticulo.querySelector('select#listaArticulo');
+    const inputNombreArticulo = bloqueArticulo.querySelector('input#articuloDeuda');
+    const inputPrecioArticulo = bloqueArticulo.querySelector('input#precioArticulo');
+    
+    
+    selectNombreArticulo.disabled = bool;
+    inputNombreArticulo.disabled  = bool;
+    inputPrecioArticulo.disabled  = bool;
+
+    if( bool ){
+        bloqueArticulo.querySelector('#btnBorrarArticulo').style.display = 'none';
+    } else {
+        bloqueArticulo.querySelector('#btnBorrarArticulo').style.display = '';
+    }
 }
 
 
@@ -240,6 +269,7 @@ export function cargarSelectArticulos( select, articulos ){
 
     return;
 }
+
 
 export function crearBtnsAccionesDeuda(id = '') {
     const filaBtns = document.createElement('div'); 

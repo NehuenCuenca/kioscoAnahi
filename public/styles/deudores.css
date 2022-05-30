@@ -1,9 +1,9 @@
-html {
-    overflow-y: scroll;
+
+
+
+.displayOff {
+    display: none;
 }
-
-
-
 
 /* .addScroll{
     overflow-y:auto;

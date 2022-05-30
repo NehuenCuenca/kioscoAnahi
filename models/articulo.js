@@ -13,6 +13,10 @@ const ArticuloSchema = Schema({
         type: String,
         default: '--'
     },
+    hayStock: {
+        type: Boolean,
+        default: true
+    },
     estado: {
         type: Boolean,
         default: true

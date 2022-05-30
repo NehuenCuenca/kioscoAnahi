@@ -11,6 +11,8 @@
       integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
       crossorigin="anonymous"
     />
+    <link rel="stylesheet" href="../styles/vistas.css">
+    <link rel="stylesheet" href="../styles/articulos.css">
     <title> Articulos | kioscoAnahi  </title>
 </head>
 <body>
@@ -33,9 +35,46 @@
         </header>
     </div>
 
-    <main class="container mt-5">
-      <h1 class="bg-success text-light text-center">ARTICULOS</h1>
+    <main class="container mt-5 justify-content-md-center">
+      <h1 class="bg-success text-light text-center">Articulos</h1>
 
+      <div class="container justify-content-center">
+        <button id="btnCrearArticulo" class="btn btn-primary my-3 justify-content-center">Crear articulo</button>
+        <button id="btnVerArticuloSinStock" class="btn btn-warning my-3 justify-content-center">Ver articulos sin stock</button>
+      </div>
+
+      <div id="alerta"></div>
+
+      <div class="table-responsive">
+        <table id="articulos"class="table table-success table-hover table-bordered table-sm align-middle">
+          <thead class="text-center">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Precio</th>
+              <th scope="col-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="table-responsive displayOff">
+        <table id="articulosFaltantes"class="table table-success table-hover table-bordered table-sm align-middle">
+          <thead class="text-center">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">descripcion</th>
+              <th scope="col-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </main>
+
+    <!-- <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
+    <script src="../src/articulos.js" type="module"></script>
 </body>
 </html>

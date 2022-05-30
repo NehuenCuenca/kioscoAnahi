@@ -36,9 +36,9 @@ const obtenerArticulo = async( req, res = response ) => {
 
 
 const crearArticulo = async( req, res = response ) => {
-    const { nombre, precio, descripcion = '--' } = req.body;
+    const { nombre, precio, descripcion = '--', hayStock } = req.body;
 
-    const articulo = new Articulo({ nombre, precio, descripcion });
+    const articulo = new Articulo({ nombre, precio, descripcion, hayStock });
     await articulo.save();
 
     res.json({ 

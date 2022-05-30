@@ -21,11 +21,13 @@ export async function traerDatosPorIdAPI( controller = '', id = '' ) {
 
 
 export async function actualizarDatosAPI( controller = '', id = '', cambios ){
+    const token = localStorage.getItem('x-token');
     const resp = await fetch(`${URL}/api/${controller}/${id}`, {
         method: 'PUT',
         body: JSON.stringify(cambios),
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-token' : token
         }
     });
 

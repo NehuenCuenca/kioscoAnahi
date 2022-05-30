@@ -207,7 +207,7 @@ function crearCliente(){
         "idModal": 'crearCliente',
         "accion": `Crear`,
         "coleccion": 'Cliente',
-        "size": 'modal-xl',
+        "size": 'modal-lg',
     }
     const modalCrear = crearModal(paramsModalCrearCliente); 
     const formCrear  = crearFormClientes();
