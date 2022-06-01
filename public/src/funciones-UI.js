@@ -67,6 +67,9 @@ export function crearSombraModal() {
 
 
 export function cerrarModal(idModal) {
+    // Si ya se cerro el modal, retorno..
+    if( !document.querySelector(`#${idModal}`) ){return};
+
     // Remuevo el modal y sombra
     document.querySelector(`#${idModal}`).remove(); 
     document.querySelector(`#modalShadow`).remove(); 
@@ -306,6 +309,49 @@ export function crearBtnsAccionesDeuda(id = '') {
 
     btnEditarDeuda.addEventListener('click', deshabilitarBotones);
     btnSaldarDeuda.addEventListener('click', deshabilitarBotones);
+
+    return filaBtns;
+}
+
+
+export function crearFormArticulo() {
+    const form = document.createElement('form');
+
+    form.classList.add('row', 'col-10', 'justify-content-center');
+
+    form.innerHTML += `
+        <div class="row col-10 justify-content-around">    
+            <div class="row col-6 my-4">
+                <label for="nombreArticulo" class="form-label">Nombre del articulo</label>
+                <input type="text" class="form-control" id="nombreArticulo" placeholder="Ej: galletita, gaseosa, caramelos">
+            </div>
+            <div class="row col-6 my-4">
+                <label for="precioArticulo" class="form-label">Precio del articulo</label>
+                <input type="number" class="form-control" id="precioArticulo" >
+            </div>
+        </div>
+        <div class="row col-8 my-4">
+            <label for="descripcionArticulo" class="form-label">Descripcion</label>
+            <textarea class="form-control" id="descripcionArticulo" rows="4" placeholder="Breve descripcion sobre el articulo/producto"></textarea>
+        </div>
+        <div id="btnGuardarArticulo" class="row col-8 my-3 justify-content-center">
+            <button class="btn btn-success">Guardar</button>
+        </div>
+    `;
+
+    return form;
+}
+
+export function crearBtnsAccionesArticulo(id = '') {
+    const filaBtns = document.createElement('div'); 
+    filaBtns.classList.add('row','col-8', 'justify-content-around',);
+    filaBtns.id = "acciones"
+
+    filaBtns.innerHTML += ` 
+            <button id="btnEditarArticulo" data-articulo="${id}" class="col-3 btn btn-info fw-bold border border-dark border-1 rounded p-2 fs-4">Editar</button>
+            <button id="btnEliminarArticulo" data-articulo="${id}" class="col-3 btn btn-danger fw-bold border border-dark border-1 rounded p-2 fs-4">Eliminar</button>
+            <button id="btnFaltaStock" data-articulo="${id}" class="col-3 btn btn-warning fw-bold border border-dark border-1 rounded p-2 fs-4">Falta stock</button>
+    `;
 
     return filaBtns;
 }
