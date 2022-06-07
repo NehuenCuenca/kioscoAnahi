@@ -4,12 +4,24 @@ const Articulo = require('../models/articulo');
 
 
 const obtenerArticulos = async( req, res = response ) => {
-    const { limite = 5, desde = 0 } = req.query;
     const queryActivos = { estado: true };
+    const querySinStock = { estado: true, hayStock: false };
+
+    const { limite = 5, desde = 0, filtro } = req.query;
+    let filtroActual;
+    switch (filtro) {
+        case 'sinStock':
+            filtroActual = querySinStock;
+            break;
+    
+        default:
+            filtroActual = queryActivos;
+            break;
+    }
 
     const [ total, articulos ] = await Promise.all([
-        Articulo.countDocuments( queryActivos ),
-        Articulo.find( queryActivos )
+        Articulo.countDocuments( filtroActual ),
+        Articulo.find( filtroActual )
                 .limit( Number(limite) )
                 .skip( Number(desde) )
                 .sort({ _id: 'desc' })

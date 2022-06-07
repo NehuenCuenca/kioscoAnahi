@@ -35,7 +35,13 @@ function registrarEventListeners(){
 
 
 async function traerDeudores(){
-    const { resp, data } = await traerDatosAPI('deudores');
+    const paramsRequestDeudores = {
+        controller: 'deudores',
+        limite: null,
+        desde: null,
+        filtro: '',
+    }
+    const { resp, data } = await traerDatosAPI(paramsRequestDeudores);
     if( resp.status !== 200 ){
         return alert('Algo falló al tratar de traer los deudores..');
     }
@@ -376,7 +382,13 @@ function validarArticulos(arrArticulos){
 
 
 async function traerClientes(){
-    const { resp, data: { clientes } } = await traerDatosAPI('clientes');
+    const paramsRequestClientes = {
+        controller: 'clientes',
+        limite: null,
+        desde: null,
+        filtro: '',
+    }
+    const { resp, data: { clientes } } = await traerDatosAPI(paramsRequestClientes);
 
     const clientesLimpios = clientes.map( cliente => {
         const { estado, ...resto } = cliente;
@@ -388,7 +400,13 @@ async function traerClientes(){
 
 
 async function traerArticulos(){
-    const { resp, data: { articulos } } = await traerDatosAPI('articulos');
+    const paramsRequestArticulos = {
+        controller: 'articulos',
+        limite: null,
+        desde: null,
+        filtro: '',
+    }
+    const { resp, data: { articulos } } = await traerDatosAPI(paramsRequestArticulos);
 
     const articulosLimpios = articulos.map( articulo => {
         const { estado, ...resto } = articulo;

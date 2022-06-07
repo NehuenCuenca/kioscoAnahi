@@ -4,8 +4,11 @@ import { verificarToken, eliminarToken, redireccionar } from './funciones.js'
 
 
 
-export async function traerDatosAPI( controller, limite = 100, desde = 0 ) {
-    const resp = await fetch(`${URL}/api/${controller}?limite=${limite}&desde=${desde}`);
+export async function traerDatosAPI( objParams ) {
+    const { controller ='', limite = 100, desde = 0, filtro = '' } = objParams;
+    const filtroActual = (filtro) ? `&filtro=${filtro}` : '';
+    
+    const resp = await fetch(`${URL}/api/${controller}?limite=${limite}&desde=${desde}${filtroActual}`);
     const data = await resp.json();
 
     return { resp, data };

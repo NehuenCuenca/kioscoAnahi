@@ -189,7 +189,14 @@ function limpiarContenidoTabla() {
 }
 
 async function traerClientes(){
-    const { resp, data: { clientes, total } } = await traerDatosAPI('clientes');
+    const paramsRequestClientes = {
+        controller: 'clientes',
+        limite: null,
+        desde: null,
+        filtro: '',
+    }
+
+    const { resp, data: { clientes, total } } = await traerDatosAPI(paramsRequestClientes);
 
     const clientesLimpios = clientes.map( cliente => {
         const { estado, ...resto } = cliente;
@@ -198,7 +205,6 @@ async function traerClientes(){
 
     return clientesLimpios;
 }
-
 
 
 function crearCliente(){

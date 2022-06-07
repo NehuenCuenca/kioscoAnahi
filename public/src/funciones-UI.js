@@ -342,16 +342,50 @@ export function crearFormArticulo() {
     return form;
 }
 
-export function crearBtnsAccionesArticulo(id = '') {
+export function crearBtnsAccionesArticulo(idArticulo = '', btns) {
     const filaBtns = document.createElement('div'); 
-    filaBtns.classList.add('row','col-8', 'justify-content-around',);
-    filaBtns.id = "acciones"
+    filaBtns.classList.add('row','col-8', 'justify-content-around');
+    filaBtns.id = "acciones";
 
-    filaBtns.innerHTML += ` 
-            <button id="btnEditarArticulo" data-articulo="${id}" class="col-3 btn btn-info fw-bold border border-dark border-1 rounded p-2 fs-4">Editar</button>
-            <button id="btnEliminarArticulo" data-articulo="${id}" class="col-3 btn btn-danger fw-bold border border-dark border-1 rounded p-2 fs-4">Eliminar</button>
-            <button id="btnFaltaStock" data-articulo="${id}" class="col-3 btn btn-warning fw-bold border border-dark border-1 rounded p-2 fs-4">Falta stock</button>
-    `;
+    for (let i = 0; i < btns.length; i++) {
+        const { idBtn, texto, eventListeners, clasesCSS } = btns[i];
+        
+        const nuevoBtn = document.createElement('button');
+        nuevoBtn.id = idBtn;
+        nuevoBtn.textContent = texto;
+        nuevoBtn.dataset.articulo = idArticulo;
+        nuevoBtn.addEventListener('click', eventListeners);
+        nuevoBtn.className = clasesCSS;
+        
+        filaBtns.appendChild( nuevoBtn );
+    }
 
     return filaBtns;
+}
+
+
+export function crearBtnsAccionesTabla(arrBtns) {
+    const celdaAcciones = document.createElement('td');
+    
+    const blockBtns = document.createElement('div');
+    blockBtns.id = 'acciones'
+    blockBtns.classList.add('col-10', 'justify-content-around');
+
+    for (let i = 0; i < arrBtns.length; i++) {
+        const { idBtn, texto, dataSet, eventListeners, clasesCSS} = arrBtns[i];
+        
+        // Creo boton con un ID, clases CSS y le asigno una funcion
+        const btn = document.createElement('button');
+        btn.id = idBtn;
+        btn.className = clasesCSS;
+        btn.textContent = texto;
+        btn.dataset.articulo = dataSet;
+        btn.addEventListener('click', eventListeners);
+        blockBtns.appendChild(btn)
+        
+        celdaAcciones.appendChild(blockBtns );
+    }
+
+
+    return celdaAcciones;
 }

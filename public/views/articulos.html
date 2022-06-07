@@ -40,13 +40,14 @@
 
       <div class="container justify-content-center">
         <button id="btnCrearArticulo" class="btn btn-primary my-3 justify-content-center">Crear articulo</button>
-        <button id="btnVerArticuloSinStock" class="btn btn-warning my-3 justify-content-center">Ver articulos sin stock</button>
+        <button id="btnVerArticulosSinStock" data-table="sinStock" class="btn btn-warning my-3 justify-content-center">Ver articulos sin stock</button>
+        <button id="btnVerArticulos" data-table="articulos" class="btn btn-success my-3 justify-content-center">Ver todos los articulos</button>
       </div>
 
       <div id="alerta"></div>
 
       <div class="table-responsive">
-        <table id="articulos"class="table table-secondary table-hover table-bordered table-sm align-middle">
+        <table id="articulos" data-articulos="articulos" class="table table-secondary table-hover table-bordered table-sm align-middle">
           <thead class="text-center">
             <tr>
               <th scope="col">ID</th>
@@ -60,12 +61,12 @@
       </div>
 
       <div class="table-responsive displayOff">
-        <table id="articulosFaltantes"class="table table-success table-hover table-bordered table-sm align-middle">
+        <table id="sinStock" data-articulos="sinStock" class="table table-danger table-hover table-bordered table-sm align-middle">
           <thead class="text-center">
             <tr>
               <th scope="col">ID</th>
               <th scope="col">Nombre</th>
-              <th scope="col">descripcion</th>
+              <th scope="col">Precio</th>
               <th scope="col-4">Acciones</th>
             </tr>
           </thead>
@@ -73,6 +74,7 @@
         </table>
       </div>
     </main>
+
 
     <!-- <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script> -->
     <script src="../src/articulos.js" type="module"></script>

@@ -1,28 +1,80 @@
 
 import { actualizarDatosAPI, eliminarDatosAPI, enviarDatosAPI, traerDatosAPI, traerDatosPorIdAPI } from '../src/funciones-API.js';
-import { crearModal, cerrarModal, crearFormArticulo, mostrarMsj, crearBtnsAccionesArticulo } from '../src/funciones-UI.js';
+import { crearModal, cerrarModal, crearFormArticulo, mostrarMsj, crearBtnsAccionesTabla, crearBtnsAccionesArticulo } from '../src/funciones-UI.js';
 import { validarInputString } from './funciones.js';
 
+// vars
+const tablaArticulos = document.querySelector('table#articulos')
+const tablaArticulosSinStock = document.querySelector('table#sinStock');
+
+
+// Cuando se cargue el HTML...
 document.addEventListener('DOMContentLoaded', async() => {
     registrarEventListeners();
-    cargarTabla( await traerArticulos() );
+
+    setearTabla( tablaArticulos, await traerArticulos() );
 });
+
+
+// fn que quita la tabla actual en pantalla y muestra una tabla indicada. 
+function switchTabla(tabla) {
+    if( tabla.parentElement.classList.contains('displayOff') ){
+        displayTabla(tabla.id);
+    } 
+    return;
+}
+
+
+function setearTabla( tabla, articulos ){    
+    cargarTabla( tabla, articulos );
+
+    const btnsAcciones = [
+        { idBtn: 'btnConsultarArticulo', texto: 'Consultar', eventListeners: verArticulo, clasesCSS: 'btn btn-sm btn-success'},
+        { idBtn: 'btnEditarArticulo', texto: 'Editar', eventListeners: editarArticulo, clasesCSS: 'btn btn-sm btn-info'},
+        { idBtn: 'btnEliminarArticulo', texto: 'Eliminar', eventListeners: eliminarArticulo, clasesCSS: 'btn btn-sm btn-danger'},
+    ];
+
+    agregarBtnsAccionesTabla( tabla, articulos, btnsAcciones );
+}
+
 
 function registrarEventListeners() {
     const btnCrearArticulo = document.querySelector('#btnCrearArticulo');
     btnCrearArticulo.addEventListener('click', crearArticulo);
 
-    const btnVerArticuloSinStock = document.querySelector('#btnVerArticuloSinStock');
-    btnVerArticuloSinStock.addEventListener('click', verTablaSinStock)
+    const btnVerArticuloSinStock = document.querySelector('#btnVerArticulosSinStock');
+    btnVerArticuloSinStock.addEventListener('click', async(e) => {
+        verTabla( e, await traerArticulos('sinStock') );
+    });
+
+    const btnVerArticulos = document.querySelector('#btnVerArticulos');
+    btnVerArticulos.addEventListener('click', async(e) => {
+        verTabla( e, await traerArticulos() );
+    });
 }
 
-function verTablaSinStock(e){
-    console.log('mostrando tabla de articulos sin stock...')
+
+// fn para los BTNS 'ver tabla ...'
+function verTabla(e, articulos){
+    const idTabla = e.target.getAttribute('data-table');
+
+    displayTabla(idTabla);
+
+    const tabla = document.querySelector(`table#${idTabla}`);
+    setearTabla( tabla, articulos );
 }
+
+
+function displayTabla(idTabla) {
+    const tablaAremover = document.querySelector('.table-responsive:not(.displayOff)');
+    tablaAremover.classList.add('displayOff');
+
+    const tablaAmostrar = document.querySelector(`.table-responsive > table#${idTabla}`).parentElement;
+    tablaAmostrar.classList.remove('displayOff');
+}
+
 
 function crearArticulo(e){
-    console.log('creando articulo...')
-
     const paramsModalCrearArticulo = {
         "idModal": 'crearArticulo',
         "accion": `crear`,
@@ -64,16 +116,24 @@ function crearArticulo(e){
             // cierro modal y sombra
             setTimeout( async() => {
                 cerrarModal( modalCrearArticulo.id );
-    
-                cargarTabla( await traerArticulos() );
+
+                switchTabla(tablaArticulos);
+                setearTabla( tablaArticulos, await traerArticulos() );
             }, 1200);
         } );
     });
 }
 
 
-async function traerArticulos(){
-    const { resp, data: { articulos } } = await traerDatosAPI('articulos');
+async function traerArticulos(filtro = ''){
+    const paramsRequestArticulos = {
+        controller: 'articulos',
+        limite: null,
+        desde: null,
+        filtro
+    }
+
+    const { resp, data: { articulos } } = await traerDatosAPI(paramsRequestArticulos);
 
     const articulosLimpios = articulos.map( articulo => {
         const { estado, descripcion, ...resto } = articulo;
@@ -85,8 +145,7 @@ async function traerArticulos(){
 
 
 function limpiarContenidoTabla(tabla) {
-    console.log(tabla)
-    const contenidoTabla = tabla.querySelector('tbody');
+    const contenidoTabla = tabla.querySelector('table tbody');
 
     while( contenidoTabla.firstChild ){
         contenidoTabla.removeChild( contenidoTabla.firstChild );
@@ -94,9 +153,9 @@ function limpiarContenidoTabla(tabla) {
 }
 
 
-function cargarTabla( articulos ){
-    const tablaArticulos = document.querySelector('table#articulos');
-    limpiarContenidoTabla(tablaArticulos);
+// carga una tabla con articulos y una celda de Acciones
+function cargarTabla( tabla, articulos ){
+    limpiarContenidoTabla(tabla);
 
     if( articulos.length === 0 ){
         const filaVacia = document.createElement('tr');
@@ -109,10 +168,10 @@ function cargarTabla( articulos ){
 
         filaVacia.appendChild(celdaVacia);
 
-        tablaArticulos.appendChild(filaVacia);
+        tabla.appendChild(filaVacia);
         return;
     }
-
+    
     // Por cada articulos...
     for (let i = 0; i < articulos.length; i++) {
 
@@ -124,7 +183,7 @@ function cargarTabla( articulos ){
         const valuesArticulo = Object.values(articulos[i]);
         
         // Por cada valueArticulo, creo una celda
-        for (let j = 0; j <= valuesArticulo.length; j++) {
+        for (let j = 0; j < valuesArticulo.length; j++) {
             const keyActual = keysArticulo[j];
             const valueActual = valuesArticulo[j];
 
@@ -144,138 +203,36 @@ function cargarTabla( articulos ){
                 continue;
             }
 
-
-            // Si llego al final, creo los botones Editar y Eliminar (ACCIONES)
-            if( valuesArticulo.length === j ){
-                const celdaAcciones = document.createElement('td');
-
-                const btnConsultar = document.createElement('button');
-                btnConsultar.classList.add('btn', 'btn-sm', 'btn-success');
-                btnConsultar.textContent = 'Consultar';
-                btnConsultar.addEventListener('click', verArticulo);
-                btnConsultar.dataset.articulo = articulos[i]._id
-
-                const btnEditar = document.createElement('button');
-                btnEditar.classList.add('btn', 'btn-sm', 'btn-warning');
-                btnEditar.textContent = 'Editar';
-                btnEditar.addEventListener('click', editarArticulo);
-                btnEditar.dataset.articulo = articulos[i]._id
-
-                const btnEliminar = document.createElement('button');
-                btnEliminar.classList.add('btn', 'btn-sm', 'btn-danger');
-                btnEliminar.textContent = 'Eliminar';
-                btnEliminar.dataset.articulo = articulos[i]._id
-                btnEliminar.addEventListener('click', eliminarArticulo);
-
-                celdaAcciones.classList.add('col-3', 'py-2', 'justify-content-around')
-                celdaAcciones.appendChild(btnConsultar);
-                celdaAcciones.appendChild(btnEditar);
-                celdaAcciones.appendChild(btnEliminar);
-                fila.appendChild( celdaAcciones );
-
-                break;
-            }
-
             // Agrego cada celda en la fila
             fila.appendChild( celda );
         }
 
         // Agrego la fila (registro de articulo) a la tabla
-        tablaArticulos.querySelector('tbody').appendChild(fila);
+        tabla.querySelector('tbody').appendChild(fila);
     }
 }
 
 
-async function verArticulo(e){
-    const idArticulo = e.target.getAttribute('data-articulo')
-    // const articulo = await traerDatosPorIdAPI();
+// Por cada articulo de la tabla HTML, agrego una celda de Acciones con los 'btns' especificados
+function agregarBtnsAccionesTabla( idTabla, articulos, btns ) {
+    const filasTablas = Array.from( idTabla.querySelectorAll('tbody > tr') );
 
-    const paramsModalConsultarArticulo = {
-        "idModal": 'consultarArticulo',
-        "accion": `consultar`,
-        "coleccion": 'Articulo',
-        "size": 'modal-lg',
-    }
-    const modalConsultarArticulo = crearModal(paramsModalConsultarArticulo);
+    // Por cada articulo.. 
+    for (let i = 0; i < articulos.length; i++) {
+        const { _id } = articulos[i];
+        const filaActual = filasTablas[i];
 
-    const bodyModal = modalConsultarArticulo.querySelector('.modal-body')
-    bodyModal.appendChild( crearBtnsAccionesArticulo(idArticulo) );
-    bodyModal.appendChild( crearFormArticulo() );
-    modalConsultarArticulo.querySelector('#btnGuardarArticulo').remove();
-
-    const btnAcciones = bodyModal.querySelector('#acciones');
-
-    const btnEditarArticulo = btnAcciones.querySelector('#btnEditarArticulo');
-    btnEditarArticulo.addEventListener('click', (e) => {
-        cerrarModal( modalConsultarArticulo.id );
-        editarArticulo(e);
-    });
-
-    const btnEliminarArticulo = btnAcciones.querySelector('#btnEliminarArticulo');
-    btnEliminarArticulo.addEventListener('click', (e) => {
-        cerrarModal( modalConsultarArticulo.id );
-        eliminarArticulo(e);
-    });
-
-    const btnFaltaStock = btnAcciones.querySelector('#btnFaltaStock');
-    btnFaltaStock.addEventListener('click', (e) => {
-        cambiarStock(e);
-    });
-
-
-    const { resp, data : { articulo: { nombre, precio, descripcion} } } = await traerDatosPorIdAPI('articulos', idArticulo);
-
-    const formArticulo = bodyModal.querySelector('form');
-    const nombreArticuloInput = formArticulo.querySelector('#nombreArticulo');
-    const precioArticuloInput = formArticulo.querySelector('#precioArticulo');
-    const descripcionArticuloInput = formArticulo.querySelector('#descripcionArticulo');
-
-    nombreArticuloInput.value = nombre;
-    precioArticuloInput.value = precio;
-    descripcionArticuloInput.value = descripcion;
-
-    const arrInputsDeshabilitados = [
-        { selector : nombreArticuloInput, bool: true },
-        { selector : precioArticuloInput, bool: true },
-        { selector : descripcionArticuloInput, bool: true }
-    ]
-
-    deshabilitarInputs(arrInputsDeshabilitados);
-}
-
-async function cambiarStock(e){
-    const idArticulo = e.target.getAttribute('data-articulo');
-    
-    const { data: {articulo : articuloCambiado} } = await traerDatosPorIdAPI('articulos', idArticulo);
-    delete articuloCambiado.estado;
-    articuloCambiado.hayStock = false;
-
-    const {resp, data: {msg} } = await actualizarDatosAPI('articulos', idArticulo, articuloCambiado);
-    
-    // muestro mensaje de exito o de fallo de la accion editar..
-    const modalActual = document.querySelector('.modal.fade.show');
-    const formArticulo = modalActual.querySelector('form')
-    if( resp.status === 200 ){
-        mostrarMsj('success', msg, formArticulo);
-    } else {
-        mostrarMsj('success', `No se pudo realizar la accion, debido al error: ${msg}`, formArticulo);
-    }
-
-    // cierro modal y sombra
-    setTimeout( async() => {
-        cerrarModal( modalActual.id );
-        cargarTabla( await traerArticulos() );
-    }, 1200);
-}
-
-
-
-function deshabilitarInputs(arrInputs) {
-    for (let i = 0; i < arrInputs.length; i++) {
-        const { selector, bool } = arrInputs[i];
-        selector.disabled = bool;
+        // A cada boton le asigno un 'dataSet', con el id del articulo correspondiente
+        const btnsMapeados = btns.map( btn => {
+            const btnNuevo = { ...btn, dataSet: _id };
+            return btnNuevo;
+        });
+        
+        // Agrego la celda que es creada por la fn 'crearBtnsAccionesTabla'
+        filaActual.appendChild( crearBtnsAccionesTabla(btnsMapeados) );
     }
 }
+
 
 async function editarArticulo(e) {
     const idArticulo = e.target.getAttribute('data-articulo');
@@ -287,6 +244,7 @@ async function editarArticulo(e) {
         "size": 'modal-lg',
     }
     const modalEditarArticulo = crearModal(paramsModalEditarArticulo);
+
     const { resp, data : { articulo: { nombre, precio, descripcion} } } = await traerDatosPorIdAPI('articulos', idArticulo);
 
     const bodyModal = modalEditarArticulo.querySelector('.modal-body')
@@ -309,8 +267,7 @@ async function editarArticulo(e) {
             const cambios = {
                 "nombre" : nombreArticuloInput.value,
                 "precio" : precioArticuloInput.value,
-                "descripcion" : descripcionArticuloInput.value,
-                "hayStock": true
+                "descripcion" : descripcionArticuloInput.value
             }
     
             // Envio los cambios
@@ -326,11 +283,15 @@ async function editarArticulo(e) {
             // cierro modal y sombra
             setTimeout( async() => {
                 cerrarModal( modalEditarArticulo.id );
-                cargarTabla( await traerArticulos() );
+
+                const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
+                const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
+                setearTabla( tablaActual, await traerArticulos(filtroArticulos) );
             }, 1200);
         } );
     });
 }
+
 
 async function eliminarArticulo(e) {
     const idArticulo = e.target.getAttribute('data-articulo');
@@ -343,7 +304,11 @@ async function eliminarArticulo(e) {
             mostrarMsj( 'success', msg, blockAlerta );
 
             setTimeout( async() => {
-                cargarTabla( await traerArticulos() );
+
+                const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
+                const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
+
+                setearTabla( tablaActual, await traerArticulos(filtroArticulos) );
             }, 1200);
         } else {
             mostrarMsj( 'danger', 'No se pudo borrar el articulo, intente de nuevo', blockAlerta );
@@ -351,8 +316,129 @@ async function eliminarArticulo(e) {
     }
 }
 
-async function validarForm( form, callback ) {
 
+async function verArticulo(e){
+    const idArticulo = e.target.getAttribute('data-articulo');
+
+    const paramsModalConsultarArticulo = {
+        "idModal": 'consultarArticulo',
+        "accion": `consultar`,
+        "coleccion": 'Articulo',
+        "size": 'modal-lg',
+    }
+    const modalConsultarArticulo = crearModal(paramsModalConsultarArticulo);
+
+    const bodyModal = modalConsultarArticulo.querySelector('.modal-body');
+    const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
+    const idTablaActual = tablaActual.querySelector('table').id;
+
+    let articulosPostAccion;
+    // traigo los articulos correspondientes segun la tablaActual
+    async function setArticulosPostAccion(){
+        switch (idTablaActual) {
+            case 'articulos':
+                articulosPostAccion = await traerArticulos();
+                break;
+            case 'sinStock':
+                articulosPostAccion = await traerArticulos('sinStock');
+                break;
+        }
+        return articulosPostAccion;
+    }
+
+    const cerrarModalYEditar = (e) => {
+        cerrarModal( modalConsultarArticulo.id );
+        editarArticulo(e);
+    }
+
+    const cerrarModalYEliminar = (e) => {
+        cerrarModal( modalConsultarArticulo.id );
+        eliminarArticulo(e);
+    };
+
+    const marcarStockCompleto = async(e) => {
+        await cambiarStock(e, true);
+        setearTabla( tablaActual, await setArticulosPostAccion() );
+    };
+
+    const marcarStockIncompleto = async(e) => {
+        await cambiarStock(e, false);
+        setearTabla( tablaActual, await setArticulosPostAccion() );
+    };
+
+    bodyModal.appendChild( crearFormArticulo() );
+    modalConsultarArticulo.querySelector('#btnGuardarArticulo').remove();
+
+
+    const { resp, data : { articulo: { nombre, precio, descripcion, hayStock } } } = await traerDatosPorIdAPI('articulos', idArticulo);
+
+    // Si el articulo tiene stock, muestro el boton 'Falta Stock', de lo contrario, 'Stock Completo'
+    const btnMarcarStock = (hayStock) 
+                                ? { idBtn: 'btnFaltaStock', texto: 'Falta stock', eventListeners: marcarStockIncompleto, clasesCSS: 'col-3 btn btn-warning fw-bold border border-dark border-1 rounded p-2 fs-4'} 
+                                : { idBtn: 'btnStockCompleto', texto: 'Stock completo', eventListeners: marcarStockCompleto, clasesCSS: 'col-3 btn btn-success fw-bold border border-dark border-1 rounded p-2 fs-4'} ;
+    
+    const btnsAcciones = [
+        btnMarcarStock,
+        { idBtn: 'btnEditarArticulo', texto: 'Editar', eventListeners: cerrarModalYEditar, clasesCSS: 'col-3 btn btn-info fw-bold border border-dark border-1 rounded p-2 fs-4'},
+        { idBtn: 'btnEliminarArticulo', texto: 'Eliminar', eventListeners: cerrarModalYEliminar, clasesCSS: 'col-3 btn btn-danger fw-bold border border-dark border-1 rounded p-2 fs-4'},
+    ];
+
+
+    const formArticulo = bodyModal.querySelector('form');
+    
+    bodyModal.insertBefore( crearBtnsAccionesArticulo(idArticulo, btnsAcciones), formArticulo);
+    const nombreArticuloInput = formArticulo.querySelector('#nombreArticulo');
+    const precioArticuloInput = formArticulo.querySelector('#precioArticulo');
+    const descripcionArticuloInput = formArticulo.querySelector('#descripcionArticulo');
+
+    nombreArticuloInput.value = nombre;
+    precioArticuloInput.value = precio;
+    descripcionArticuloInput.value = descripcion;
+
+    const arrInputsDeshabilitados = [
+        { selector : nombreArticuloInput, bool: true },
+        { selector : precioArticuloInput, bool: true },
+        { selector : descripcionArticuloInput, bool: true }
+    ]
+
+    deshabilitarInputs(arrInputsDeshabilitados);
+}
+
+
+async function cambiarStock(e, bool){
+    const idArticulo = e.target.getAttribute('data-articulo');
+
+    const { data: {articulo : articuloCambiado} } = await traerDatosPorIdAPI('articulos', idArticulo);
+    delete articuloCambiado.estado;
+    articuloCambiado.hayStock = bool;
+
+    const {resp, data: {msg} } = await actualizarDatosAPI('articulos', idArticulo, articuloCambiado);
+    
+    // muestro mensaje de exito o de fallo de la accion editar..
+    const modalActual = document.querySelector('.modal.fade.show');
+    const formArticulo = modalActual.querySelector('form')
+    if( resp.status === 200 ){
+        mostrarMsj('success', msg, formArticulo);
+    } else {
+        mostrarMsj('success', `No se pudo realizar la accion, debido al error: ${msg}`, formArticulo);
+    }
+
+    // cierro modal y sombra
+    setTimeout( async() => {
+        cerrarModal( modalActual.id );
+    }, 1200);
+}
+
+
+function deshabilitarInputs(arrInputs) {
+    for (let i = 0; i < arrInputs.length; i++) {
+        const { selector, bool } = arrInputs[i];
+        selector.disabled = bool;
+    }
+}
+
+// fn que valida los campos 'nombre' y 'descripcion' de un form
+async function validarForm( form, callback ) {
     const nombre = form.querySelector('input#nombreArticulo').value;
     const descripcion  = form.querySelector('textarea#descripcionArticulo').value;
     
