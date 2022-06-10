@@ -40,8 +40,9 @@
 
       <div class="container justify-content-center">
         <button id="btnCrearArticulo" class="btn btn-primary my-3 justify-content-center">Crear articulo</button>
-        <button id="btnVerArticulosSinStock" data-table="sinStock" class="btn btn-warning my-3 justify-content-center">Ver articulos sin stock</button>
         <button id="btnVerArticulos" data-table="articulos" class="btn btn-success my-3 justify-content-center">Ver todos los articulos</button>
+        <button id="btnVerArticulosSinStock" data-table="sinStock" class="btn btn-warning my-3 justify-content-center">Ver articulos sin stock</button>
+        <button id="btnVerArticulosEliminados" data-table="eliminados" class="btn btn-danger my-3 justify-content-center">Ver articulos eliminados</button>
       </div>
 
       <div id="alerta"></div>
@@ -61,7 +62,21 @@
       </div>
 
       <div class="table-responsive displayOff">
-        <table id="sinStock" data-articulos="sinStock" class="table table-danger table-hover table-bordered table-sm align-middle">
+        <table id="sinStock" data-articulos="sinStock" class="table table-warning table-hover table-bordered table-sm align-middle">
+          <thead class="text-center">
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Nombre</th>
+              <th scope="col">Precio</th>
+              <th scope="col-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="table-responsive displayOff">
+        <table id="eliminados" data-articulos="eliminados" class="table table-danger table-hover table-bordered table-sm align-middle">
           <thead class="text-center">
             <tr>
               <th scope="col">ID</th>

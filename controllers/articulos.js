@@ -5,6 +5,7 @@ const Articulo = require('../models/articulo');
 
 const obtenerArticulos = async( req, res = response ) => {
     const queryActivos = { estado: true };
+    const queryEliminados = { estado: false };
     const querySinStock = { estado: true, hayStock: false };
 
     const { limite = 5, desde = 0, filtro } = req.query;
@@ -12,6 +13,10 @@ const obtenerArticulos = async( req, res = response ) => {
     switch (filtro) {
         case 'sinStock':
             filtroActual = querySinStock;
+            break;
+
+        case 'eliminados':
+            filtroActual = queryEliminados;
             break;
     
         default:

@@ -7,12 +7,29 @@ import { validarInputString } from './funciones.js';
 const tablaArticulos = document.querySelector('table#articulos')
 const tablaArticulosSinStock = document.querySelector('table#sinStock');
 
+const btnsAcciones = [
+    { idBtn: 'btnConsultarArticulo', texto: 'Consultar', eventListeners: verArticulo, clasesCSS: 'btn btn-sm btn-success'},
+    { idBtn: 'btnEditarArticulo', texto: 'Editar', eventListeners: editarArticulo, clasesCSS: 'btn btn-sm btn-info'},
+    { idBtn: 'btnEliminarArticulo', texto: 'Eliminar', eventListeners: eliminarArticulo, clasesCSS: 'btn btn-sm btn-danger'},
+];
+
+const btnsAccionesTablaEliminados = [
+    { idBtn: 'btnConsultarArticulo', texto: 'Consultar', eventListeners: verArticulo, clasesCSS: 'btn btn-sm btn-success'},
+    { idBtn: 'btnRestaurarArticulo', texto: 'Restaurar', eventListeners: restaurarArticulo, clasesCSS: 'btn btn-sm btn-info'},
+];
+
 
 // Cuando se cargue el HTML...
 document.addEventListener('DOMContentLoaded', async() => {
     registrarEventListeners();
 
-    setearTabla( tablaArticulos, await traerArticulos() );
+    const ajustesTabla = {
+        tabla: tablaArticulos,
+        datos: await traerArticulos(),
+        btns: btnsAcciones,
+    }
+
+    setearTabla( ajustesTabla );
 });
 
 
@@ -25,16 +42,11 @@ function switchTabla(tabla) {
 }
 
 
-function setearTabla( tabla, articulos ){    
-    cargarTabla( tabla, articulos );
+function setearTabla( ajustesTabla ){    
+    const { tabla, datos, btns } = ajustesTabla;
+    cargarDatosTabla( tabla, datos );
 
-    const btnsAcciones = [
-        { idBtn: 'btnConsultarArticulo', texto: 'Consultar', eventListeners: verArticulo, clasesCSS: 'btn btn-sm btn-success'},
-        { idBtn: 'btnEditarArticulo', texto: 'Editar', eventListeners: editarArticulo, clasesCSS: 'btn btn-sm btn-info'},
-        { idBtn: 'btnEliminarArticulo', texto: 'Eliminar', eventListeners: eliminarArticulo, clasesCSS: 'btn btn-sm btn-danger'},
-    ];
-
-    agregarBtnsAccionesTabla( tabla, articulos, btnsAcciones );
+    agregarBtnsAccionesTabla( tabla, datos, btns );
 }
 
 
@@ -42,26 +54,54 @@ function registrarEventListeners() {
     const btnCrearArticulo = document.querySelector('#btnCrearArticulo');
     btnCrearArticulo.addEventListener('click', crearArticulo);
 
-    const btnVerArticuloSinStock = document.querySelector('#btnVerArticulosSinStock');
-    btnVerArticuloSinStock.addEventListener('click', async(e) => {
-        verTabla( e, await traerArticulos('sinStock') );
-    });
-
     const btnVerArticulos = document.querySelector('#btnVerArticulos');
     btnVerArticulos.addEventListener('click', async(e) => {
-        verTabla( e, await traerArticulos() );
+        const idTable = e.target.getAttribute('data-table');
+
+        const ajustesTabla = {
+            tabla: document.querySelector(`table#${idTable}`),
+            datos: await traerArticulos(),
+            btns: btnsAcciones,
+        }
+
+        verTabla( e, ajustesTabla );
+    });
+
+    const btnVerArticuloSinStock = document.querySelector('#btnVerArticulosSinStock');
+    btnVerArticuloSinStock.addEventListener('click', async(e) => {
+        const idTable = e.target.getAttribute('data-table');
+
+        const ajustesTabla = {
+            tabla: document.querySelector(`table#${idTable}`),
+            datos: await traerArticulos('sinStock'),
+            btns: btnsAcciones,
+        }
+
+        verTabla( e, ajustesTabla );
+    });
+
+    const btnVerArticulosEliminados = document.querySelector('#btnVerArticulosEliminados');
+    btnVerArticulosEliminados.addEventListener('click', async(e) => {
+        const idTable = e.target.getAttribute('data-table');
+
+        const ajustesTabla = {
+            tabla: document.querySelector(`table#${idTable}`),
+            datos: await traerArticulos('eliminados'),
+            btns: btnsAccionesTablaEliminados,
+        }
+
+        verTabla( e, ajustesTabla );
     });
 }
 
 
 // fn para los BTNS 'ver tabla ...'
-function verTabla(e, articulos){
+function verTabla(e, ajustesTabla){
     const idTabla = e.target.getAttribute('data-table');
 
     displayTabla(idTabla);
 
-    const tabla = document.querySelector(`table#${idTabla}`);
-    setearTabla( tabla, articulos );
+    setearTabla( ajustesTabla );
 }
 
 
@@ -118,7 +158,13 @@ function crearArticulo(e){
                 cerrarModal( modalCrearArticulo.id );
 
                 switchTabla(tablaArticulos);
-                setearTabla( tablaArticulos, await traerArticulos() );
+                const ajustesTabla = {
+                    tabla: tablaArticulos,
+                    datos: await traerArticulos(),
+                    btns: btnsAcciones
+                }
+
+                setearTabla( ajustesTabla );
             }, 1200);
         } );
     });
@@ -154,10 +200,16 @@ function limpiarContenidoTabla(tabla) {
 
 
 // carga una tabla con articulos y una celda de Acciones
-function cargarTabla( tabla, articulos ){
+function cargarDatosTabla( tabla, articulos ){
     limpiarContenidoTabla(tabla);
 
     if( articulos.length === 0 ){
+        // Si ya existe el cartel retorno..
+        const existeFilaVacia = tabla.querySelector('tbody').firstChild;
+        if(existeFilaVacia){
+            return;
+        }
+
         const filaVacia = document.createElement('tr');
         filaVacia.classList.add('text-center');
 
@@ -168,7 +220,7 @@ function cargarTabla( tabla, articulos ){
 
         filaVacia.appendChild(celdaVacia);
 
-        tabla.appendChild(filaVacia);
+        tabla.querySelector('tbody').appendChild(filaVacia);
         return;
     }
     
@@ -198,7 +250,7 @@ function cargarTabla( tabla, articulos ){
             if(keyActual === 'hayStock'){
                 // Si 'hayStock' es false, le ponemos un font rojo y seguimos con la sig llave del obj..
                 if( !valueActual ){
-                    fila.classList.add('text-danger');
+                    fila.classList.add('text-warning');
                 }
                 continue;
             }
@@ -286,7 +338,14 @@ async function editarArticulo(e) {
 
                 const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
                 const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
-                setearTabla( tablaActual, await traerArticulos(filtroArticulos) );
+
+                const ajustesTabla = {
+                    tabla: tablaActual,
+                    datos: await traerArticulos(filtroArticulos),
+                    btns: btnsAcciones,
+                }
+
+                setearTabla( ajustesTabla );
             }, 1200);
         } );
     });
@@ -304,14 +363,53 @@ async function eliminarArticulo(e) {
             mostrarMsj( 'success', msg, blockAlerta );
 
             setTimeout( async() => {
-
                 const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
                 const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
 
-                setearTabla( tablaActual, await traerArticulos(filtroArticulos) );
+                const ajustesTabla = {
+                    tabla: tablaActual,
+                    datos: await traerArticulos(filtroArticulos),
+                    btns: btnsAcciones,
+                }
+
+                setearTabla( ajustesTabla );
             }, 1200);
         } else {
             mostrarMsj( 'danger', 'No se pudo borrar el articulo, intente de nuevo', blockAlerta );
+        }
+    }
+}
+
+
+async function restaurarArticulo(e) {
+    const idArticulo = e.target.getAttribute('data-articulo');
+    
+    const confirmEliminarArticulo = confirm('¿Esta seguro de RESTAURAR este articulo?');
+    if( confirmEliminarArticulo ){
+        const { data : { articulo } } = await traerDatosPorIdAPI('articulos', idArticulo);
+        articulo.estado = true;
+
+        const { resp, data : { msg } } = await actualizarDatosAPI('articulos', idArticulo, articulo);
+            
+
+        const blockAlerta = document.querySelector('#alerta');
+        if( resp.status === 200 ){
+            mostrarMsj( 'success', msg, blockAlerta );
+
+            setTimeout( async() => {
+                const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
+                const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
+
+                const ajustesTabla = {
+                    tabla: tablaActual,
+                    datos: await traerArticulos(filtroArticulos),
+                    btns: btnsAcciones,
+                }
+
+                setearTabla( ajustesTabla );
+            }, 1200);
+        } else {
+            mostrarMsj( 'danger', 'No se pudo restaurar el articulo, intente de nuevo mas tarde', blockAlerta );
         }
     }
 }
@@ -358,12 +456,26 @@ async function verArticulo(e){
 
     const marcarStockCompleto = async(e) => {
         await cambiarStock(e, true);
-        setearTabla( tablaActual, await setArticulosPostAccion() );
+
+        const ajustesTabla = {
+            tabla: tablaActual,
+            datos: await setArticulosPostAccion(),
+            btns: btnsAcciones,
+        }
+
+        setearTabla( ajustesTabla );
     };
 
     const marcarStockIncompleto = async(e) => {
         await cambiarStock(e, false);
-        setearTabla( tablaActual, await setArticulosPostAccion() );
+
+        const ajustesTabla = {
+            tabla: tablaActual,
+            datos: await setArticulosPostAccion(),
+            btns: btnsAcciones,
+        }
+
+        setearTabla( ajustesTabla );
     };
 
     bodyModal.appendChild( crearFormArticulo() );
@@ -377,7 +489,7 @@ async function verArticulo(e){
                                 ? { idBtn: 'btnFaltaStock', texto: 'Falta stock', eventListeners: marcarStockIncompleto, clasesCSS: 'col-3 btn btn-warning fw-bold border border-dark border-1 rounded p-2 fs-4'} 
                                 : { idBtn: 'btnStockCompleto', texto: 'Stock completo', eventListeners: marcarStockCompleto, clasesCSS: 'col-3 btn btn-success fw-bold border border-dark border-1 rounded p-2 fs-4'} ;
     
-    const btnsAcciones = [
+    const btnsAccionesModal = [
         btnMarcarStock,
         { idBtn: 'btnEditarArticulo', texto: 'Editar', eventListeners: cerrarModalYEditar, clasesCSS: 'col-3 btn btn-info fw-bold border border-dark border-1 rounded p-2 fs-4'},
         { idBtn: 'btnEliminarArticulo', texto: 'Eliminar', eventListeners: cerrarModalYEliminar, clasesCSS: 'col-3 btn btn-danger fw-bold border border-dark border-1 rounded p-2 fs-4'},
@@ -386,7 +498,7 @@ async function verArticulo(e){
 
     const formArticulo = bodyModal.querySelector('form');
     
-    bodyModal.insertBefore( crearBtnsAccionesArticulo(idArticulo, btnsAcciones), formArticulo);
+    bodyModal.insertBefore( crearBtnsAccionesArticulo(idArticulo, btnsAccionesModal), formArticulo);
     const nombreArticuloInput = formArticulo.querySelector('#nombreArticulo');
     const precioArticuloInput = formArticulo.querySelector('#precioArticulo');
     const descripcionArticuloInput = formArticulo.querySelector('#descripcionArticulo');
@@ -451,3 +563,4 @@ async function validarForm( form, callback ) {
         return;
     }
 }
+
