@@ -1,6 +1,7 @@
 // archivo con funciones globales
 
 import { URL, vistas } from "./variables.js";
+import { enviarDatosAPI } from './funciones-API.js'
 
 
 // FN que verifica el estado  del token
@@ -25,45 +26,17 @@ export function eliminarToken() {
     localStorage.removeItem('x-token');
 }
 
+
 // FN que redirecciona a el usuario a otra vista
 export function redireccionar(vista){
+    const { login } = vistas;
+
     if( vista === '' || vista === undefined || vista === null ){
-        window.location.href = '/index.html';
+        window.location.href = login;
     }
-    
-    window.location.href = vista;
+
+    window.location.href = `${window.location.origin}${vistas[vista]}`;
 }
-
-
-// FN de logout
-/* export async function cerrarSesion() {
-    if( verificarToken ){
-        const token = localStorage.getItem('x-token');
-        console.log( JSON.stringify({ 'x-token': token }) )
-
-        const resp = await fetch(`${URL}/api/auth/logout`, {
-            method: 'POST',
-            body: JSON.stringify({ 'x-token': token }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await resp.json();
-
-        if( resp.status === 200 ){
-            eliminarToken();
-        } else {
-            alert(data.msg);
-        }
-    } else {
-        alert('No tienes un token de sesion. Inicia sesíon, por favor.');
-    }
-    
-
-    redireccionar(vistas.login);
-} */
-
 
 export function validarInputString(input) {
     if( input.trim().length === 0 ){

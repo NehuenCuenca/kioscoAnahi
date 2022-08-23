@@ -5,20 +5,25 @@ import {
     traerDatosPorIdAPI,
     actualizarDatosAPI,
     enviarDatosAPI,
-    eliminarDatosAPI
+    eliminarDatosAPI,
+    validarTokenAPI
 } from './funciones-API.js';
 
 import { 
-    crearModal, 
-    crearSombraModal,
+    crearModal,
     crearFormClientes, 
     cerrarModal,
     mostrarMsj,
-    llenarForm
+    llenarForm,
+    vincularBtnCerrarSesion
 } from './funciones-UI.js';
 
 
 document.addEventListener('DOMContentLoaded', async() => {
+    const respValidacionToken = await validarTokenAPI();
+    if( !respValidacionToken ) { return; }
+
+    vincularBtnCerrarSesion();
     cargarTabla( await traerClientes() );
 
     const btnCrearCliente = document.querySelector('#btnCrearCliente');

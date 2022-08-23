@@ -1,8 +1,7 @@
 const { Router } = require('express');  
-const { check, body } = require('express-validator');
+const { check, body, header } = require('express-validator');
 
 const { validarCampos, validarJWT, validarSesionUsuario } = require('../middlewares');
-
 const { login, logout } = require('../controllers/auth');
 
 
@@ -20,8 +19,8 @@ router.post('/login',[
 
 router.post('/logout',[
     // validarSesionUsuario,
-    // validarJWT,
-    body('x-token', 'El token es obligatorio en la peticion(request)').not().isEmpty(),
+    header('x-token', 'El token es obligatorio en la peticion(request)').not().isEmpty(),
+    validarJWT,
     validarCampos
 ], logout );
 

@@ -2,7 +2,10 @@ const { response } = require("express");
 
 const Deudor = require('../models/deudor');
 
-const { calcularDeudaTotal, calcularDeudaTotal2 } = require('../helpers/contar-deudas');
+const { calcularDeudaTotal2 } = require('../helpers/contar-deudas');
+const { asignarCliente, crearArticuloVacios } = require('../helpers/crear-registro');
+const { yaTieneDeudas } = require("../helpers/db-validators");
+
 
 
 const obtenerDeudores = async( req, res = response ) => {
@@ -64,9 +67,34 @@ const obtenerDeudor = async( req, res = response ) => {
 const crearDeudor = async( req, res = response ) => {
     const { cliente, historial } = req.body;
 
-    let deudaTotal = calcularDeudaTotal2( historial );
+    const idCliente = await asignarCliente(cliente);
+    const historialExistente = await yaTieneDeudas(idCliente); //Si ya tiene deudas, guardo en esta const
 
-    const deudor = new Deudor({ cliente, historial, deudaTotal });
+    const historialNuevo = await crearArticuloVacios([...historialExistente, ...historial]);
+    let deudaTotal = calcularDeudaTotal2( historialNuevo );
+
+    if( historialExistente.length > 0 ){
+        const deudorExistente = await Deudor.findOneAndUpdate( 
+            {cliente: idCliente}, 
+            { 
+                cliente: idCliente, 
+                historial: historialNuevo, 
+                deudaTotal 
+            }, 
+            { new: true }
+        );
+        
+        return res.json({ 
+            msg: "Deudor ya existente, modificado exitosamente",
+            deudorExistente
+        });
+    }
+
+    const deudor = new Deudor({ 
+        cliente: idCliente, 
+        historial: historialNuevo, 
+        deudaTotal 
+    });
     await deudor.save();
 
     res.json({ 

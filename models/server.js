@@ -16,6 +16,7 @@ class Server {
             deudores :  '/api/deudores',
             proveedores: '/api/proveedores',
             usuarios :  '/api/usuarios',
+            vistas :  '/api/tokens',
         };
 
         // Conectar a la BD
@@ -41,7 +42,7 @@ class Server {
         this.app.use( express.json() );
 
         // Directorio publico
-        this.app.use( express.static('public') )
+        this.app.use( express.static('public') );
     }
 
     // configuracion de rutas
@@ -52,6 +53,7 @@ class Server {
         this.app.use( this.paths.deudores, require('../routes/deudores.js') );
         this.app.use( this.paths.proveedores, require('../routes/proveedores.js') );
         this.app.use( this.paths.usuarios, require('../routes/usuarios.js') );
+        this.app.use( this.paths.vistas, require('../routes/vistas.js') );
     }
 
     listen(){

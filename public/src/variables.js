@@ -11,11 +11,3 @@ export const vistas = {
     proveedores:  '/views/proveedores.html',
     articulosSinStock:  '/views/articulos.html'
 }
-
-
-
-
-// SELECTORES
-
-export const btnLogout = document.querySelector('#btnLogout');
-

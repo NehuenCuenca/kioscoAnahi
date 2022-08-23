@@ -3,6 +3,7 @@ const Role = require('../models/role');
 const Usuario = require('../models/usuario');
 const Cliente = require('../models/cliente');
 const Proveedor = require('../models/proveedor');
+const Deudor = require('../models/deudor');
 
 
 
@@ -32,6 +33,7 @@ const existeUsuarioPorID = async(id = '') => {
     }
 } 
 
+
 // Verificar si existe el ID  de tal CLIENTE
 const existeClientePorID = async(id = '') => {
     const existeCliente = await Cliente.findById( id );
@@ -51,6 +53,12 @@ const existeProveedorPorID = async(id = '') => {
     }
 } 
 
+const yaTieneDeudas = async(cliente) => {
+    const { historial } = await Deudor.findOne({ cliente  }) || { "historial": [] };
+    
+    return [...historial]; 
+}
+
 
 module.exports = {
     esRoleValido,
@@ -58,4 +66,5 @@ module.exports = {
     existeUsuarioPorID,
     existeClientePorID,
     existeProveedorPorID,
+    yaTieneDeudas
 }

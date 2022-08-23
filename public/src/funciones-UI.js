@@ -1,4 +1,5 @@
-
+import { traerFecha } from '../src/funciones.js'
+import { cerrarSesion } from './funciones-API.js';
 
 export function crearModal( paramsModal ){
     const { 
@@ -150,13 +151,13 @@ export function llenarForm( form, camposAllenar = [], valores ){
     })
 }
 
-// TODO: REHACER
-export function crearColumnasDeudas() {
-    const blockCrearDeuda = document.createElement('form');
-    blockCrearDeuda.classList.add('row', 'my-3', 'justify-content-around', 'p-2', 'row', 'col-12', 'text-center', 'justify-content-center', 'border', 'border-secondary', 'p-2', 'text-white');
-    blockCrearDeuda.id = 'blockCrearDeuda';
 
-    blockCrearDeuda.innerHTML = `
+export function crearFormVerHistorial( historial ) {
+    const formVerHistorial = document.createElement('form');
+    formVerHistorial.classList.add('row', 'my-3', 'justify-content-around', 'p-2', 'col-12', 'text-center', 'justify-content-center', 'border', 'border-secondary', 'p-2', 'text-white');
+    formVerHistorial.id = 'blockCrearDeuda';
+
+    formVerHistorial.innerHTML = `
         <div id="blockCliente" class="row col-4 my-3 justify-content-center">
             <select id="listaClientes" class="row form-select form-select-lg">
                 <option value="" selected>Seleccione un cliente</option>
@@ -164,31 +165,90 @@ export function crearColumnasDeudas() {
             <input type="text" id="inputCliente" class="row form-control" placeholder="Si no existe en la lista, crea uno nuevo aca..">
         </div>
 
-        
-        <div class="row col-12 justify-content-around">
+        <div id="btnGuardarDeuda" class="row col-4 my-3 justify-content-center">
+            <button class="btn btn-success">Guardar</button>
+        </div>
+    `;
+
+    for (let i = 0; i < historial.length; i++) {
+        const deudaActual = historial[i];
+        const { fecha } = deudaActual;
+
+        const bloqueDeudaActual = document.createElement('div');
+        bloqueDeudaActual.classList.add('mb-5');
+        bloqueDeudaActual.id = `deudaNro${i}`;
+        bloqueDeudaActual.innerHTML = `
+            <div class="row col-12 justify-content-center">
+                <h1 class="text-dark" id="fechaDeuda">${fecha}</h1>
+            </div>
+
+            <div class="row col-12 justify-content-around">
+                <div class="col-5 bg-danger mh-auto border border-2 border-dark rounded p-3" id="blockEnContra">
+                    EN CONTRA
+                    <div class="row col py-3 justify-content-center">
+                        <button id="btnSumarArticuloEnContra${i}" class="btn btn-primary col-6"> Sumar articulo </button>
+                        <div id="contenidoColumna" class="row col-12 justify-content-center p-2"></div>
+                    </div>
+                </div>
+                <div class="col-5 bg-success mh-auto border border-2 border-dark rounded p-3" id="blockAFavor">
+                    A FAVOR
+                    <div class="row col py-3 my-1 justify-content-center">
+                        <button id="btnSumarArticuloAFavor${i}" class="btn btn-primary col-6"> Sumar articulo </button>
+                        <div id="contenidoColumna" class="col-12 justify-content-center p-2"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        formVerHistorial.appendChild(bloqueDeudaActual)
+    }
+
+    return formVerHistorial;
+}
+
+
+export function crearFormHistorialNuevo() {
+    const formHistorialNuevo = document.createElement('form');
+    formHistorialNuevo.classList.add('row', 'my-3', 'justify-content-around', 'p-2', 'col-12', 'text-center', 'justify-content-center', 'border', 'border-secondary', 'p-2', 'text-white');
+    formHistorialNuevo.id = 'blockCrearDeuda';
+
+    formHistorialNuevo.innerHTML = `
+        <div id="blockCliente" class="row col-4 my-3 justify-content-center">
+            <select id="listaClientes" class="row form-select form-select-lg">
+                <option value="" selected>Seleccione un cliente</option>
+            </select>
+            <input type="text" id="inputCliente" class="row form-control" placeholder="Si no existe en la lista, crea uno nuevo aca..">
+        </div>
+
+        <div class="row col-12 justify-content-center">
+            <h1 class="text-dark" id="fechaDeuda">${traerFecha()}</h1>
+        </div>
+
+        <div class="row col-12 justify-content-around" id="deudaNro0">
             <div class="col-5 bg-danger mh-auto border border-2 border-dark rounded p-3" id="blockEnContra">
                 EN CONTRA
                 <div class="row col py-3 justify-content-center">
-                    <button id="btnSumarArticuloEnContra" class="btn btn-primary col-6"> Sumar articulo </button>
+                    <button id="btnSumarArticuloEnContra0" class="btn btn-primary col-6"> Sumar articulo </button>
                     <div id="contenidoColumna" class="row col-12 justify-content-center p-2"></div>
                 </div>
             </div>
-
             <div class="col-5 bg-success mh-auto border border-2 border-dark rounded p-3" id="blockAFavor">
                 A FAVOR
                 <div class="row col py-3 my-1 justify-content-center">
-                    <button id="btnSumarArticuloAFavor" class="btn btn-primary col-6"> Sumar articulo </button>
+                    <button id="btnSumarArticuloAFavor0" class="btn btn-primary col-6"> Sumar articulo </button>
                     <div id="contenidoColumna" class="col-12 justify-content-center p-2"></div>
                 </div>
             </div>
         </div>
+
 
         <div id="btnGuardarDeuda" class="row col-4 my-3 justify-content-center">
             <button class="btn btn-success">Guardar</button>
         </div>
     `;
 
-    return blockCrearDeuda;
+    // console.log(blockCrearDeuda)
+    return formHistorialNuevo;
 }
 
 
@@ -219,7 +279,7 @@ export function sumarArticuloDeuda( contenidocolumna ) {
     blockNuevoArticuloDeuda.querySelector('#btnBorrarArticulo').addEventListener('click', () => {
         blockNuevoArticuloDeuda.remove();
     })
-    
+
     contenidocolumna.appendChild( blockNuevoArticuloDeuda );
 }
 
@@ -228,8 +288,8 @@ export function sumarArticuloDeuda( contenidocolumna ) {
 export function habilitarBloqueArticulo(bloqueArticulo, bool){
     if(!bloqueArticulo){return}
     const selectNombreArticulo = bloqueArticulo.querySelector('select#listaArticulo');
-    const inputNombreArticulo = bloqueArticulo.querySelector('input#articuloDeuda');
-    const inputPrecioArticulo = bloqueArticulo.querySelector('input#precioArticulo');
+    const inputNombreArticulo  = bloqueArticulo.querySelector('input#articuloDeuda');
+    const inputPrecioArticulo  = bloqueArticulo.querySelector('input#precioArticulo');
     
     
     selectNombreArticulo.disabled = bool;
@@ -246,7 +306,7 @@ export function habilitarBloqueArticulo(bloqueArticulo, bool){
 
 export function cargarSelectClientes( select, clientes ){
     for (let i = 0; i < clientes.length; i++) {
-        const { nombre, apellido, _id} = clientes[i];
+        const { nombre, apellido, _id } = clientes[i];
 
         const option = document.createElement('option');
         option.textContent = `${nombre} ${apellido}`;
@@ -259,9 +319,9 @@ export function cargarSelectClientes( select, clientes ){
 }
 
 
-export function cargarSelectArticulos( select, articulos ){
+export function cargarSelectConArticulos( select, articulos ){
     for (let i = 0; i < articulos.length; i++) {
-        const { nombre, _id} = articulos[i];
+        const { nombre, _id } = articulos[i];
 
         const option = document.createElement('option');
         option.textContent = `${nombre}`;
@@ -388,4 +448,10 @@ export function crearBtnsAccionesTabla(arrBtns) {
 
 
     return celdaAcciones;
+}
+
+
+export function vincularBtnCerrarSesion(){
+    const btnCerrarSesion = document.querySelector('#btnLogout') || null;
+    btnCerrarSesion.addEventListener('click', cerrarSesion);
 }

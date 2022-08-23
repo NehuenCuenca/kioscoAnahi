@@ -1,37 +1,14 @@
 
 
-
-const calcularDeudaTotal = ( historial ) => {
-    const { enContra, aFavor } = historial;
-    let enContraTotal, aFavorTotal = 0;
-
-
-    if( enContra.length > 0 ){
-        enContraTotal =  enContra.reduce( (acum, deuda) => acum + deuda.precio, 0);
-    };
-
-
-    if( aFavor.length > 0 ){
-        aFavorTotal  = aFavor.reduce( (acum, deuda) => acum + deuda.precio, 0);
-    };
-    
-    return enContraTotal - aFavorTotal;
-}
-
 const calcularDeudaTotal2 = ( historial ) => {
-    let enContraTotal, aFavorTotal = 0;
-
+    let enContraTotal = 0;
+    let aFavorTotal = 0;
+    
     historial.forEach( bloqueDeuda => {
         const { enContra, aFavor } = bloqueDeuda;
 
-        enContraTotal = enContra.reduce( (acum, deuda) => acum + deuda.precio, 0);
-        aFavorTotal = aFavor.reduce( (acum, deuda) => acum + deuda.precio, 0);
-    });
-
-    console.log({
-        enContraTotal,
-        aFavorTotal,
-        "total": enContraTotal - aFavorTotal
+        enContraTotal = enContra.reduce( (acum, deuda) => acum + deuda.precio, enContraTotal);
+        aFavorTotal   = aFavor.reduce( (acum, deuda) => acum + deuda.precio, aFavorTotal);
     });
     
     return enContraTotal - aFavorTotal;
@@ -39,7 +16,6 @@ const calcularDeudaTotal2 = ( historial ) => {
 
 
 module.exports = {
-    calcularDeudaTotal,
     calcularDeudaTotal2
 }
 

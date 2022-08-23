@@ -11,14 +11,18 @@
       integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
       crossorigin="anonymous"
     />
-    <title> Proveedores | kioscoAnahi  </title>
+    <link rel="stylesheet" href="../styles/deudores.css">
+    <link rel="stylesheet" href="../styles/vistas.css">
+    <title> Deudores PUBLICO | kioscoAnahi </title>
 </head>
 <body>
     <div class="container-fluid">
         <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom px-5">
-          <a href="./menu.html" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
-            <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"/></svg>
-          </a>
+
+          <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+            <li><a href="../index.html" class="nav-link px-2 link-secondary fw-bold text-uppercase text-decoration-underline">Login</a></li>
+            <li><a href="#" class="nav-link px-2 link-dark fw-bold text-uppercase text-decoration-underline">Acerca de</a></li>
+          </ul>
     
           <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
             <li><a href="./deudores.html" class="nav-link px-2 link-secondary">Deudores</a></li>
@@ -27,16 +31,18 @@
             <li><a href="./articulos.html" class="nav-link px-2 link-dark">Articulos</a></li>
           </ul>
     
-          <div class="col-md-3 text-end">
+          <!-- <div class="col-md-3 text-end">
             <button id="btnLogout" type="button" class="btn btn-danger">Logout</button>
-          </div>
+          </div> -->
         </header>
     </div>
 
     <main class="container mt-5">
-        <h1 class="bg-success text-light text-center">PROVEEDORES</h1>
-
-        
+      <h1 class="bg-success text-light text-center">DEUDORES</h1>
+      
+      <div id="blockDeudores"></div>
     </main>
+
+    <script src="../src/deudores-publico.js" type="module"></script>
 </body>
 </html>

@@ -1,15 +1,20 @@
 
-import { URL, vistas } from './variables.js';
-import { verificarToken, eliminarToken, redireccionar } from './funciones.js';
+import { URL } from './variables.js';
+import { verificarToken, redireccionar } from './funciones.js';
 import { mostrarMsj } from './funciones-UI.js';
+import { validarTokenAPI } from "./funciones-API.js";
 
 const login = document.querySelector('#login');
 
 cargarEventListenners();
 function cargarEventListenners() {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async() => {
         if( verificarToken() ){
-            redireccionar( vistas.menu );
+            const respValidacionAPI = await validarTokenAPI();
+            
+            if( respValidacionAPI ){ //Si el token es validado con la api, redirecciono al menu
+                redireccionar('menu');
+            }
         }
     });
 
@@ -61,7 +66,7 @@ const enviarLogin = async( datosUsuario ) => {
 
             setTimeout(() => {
                 console.log("Redireccionando al menú...");
-                redireccionar( vistas.menu );
+                redireccionar('menu');
             }, 1200);
         } else {
             mostrarMsj('danger', msg, login);
@@ -72,22 +77,3 @@ const enviarLogin = async( datosUsuario ) => {
         return error;
     }
 }
-
-/* function mostrarMsj( clase, msj ) {
-    // verifico si ya existe la alerta (asi no se repite...)
-    const existeAlerta = document.querySelector('.alert');
-    if( existeAlerta ){
-        return;
-    } 
-
-    const bloqueMsj = document.createElement('div');
-    bloqueMsj.classList.add('alert', `alert-${clase}`);
-    bloqueMsj.textContent = msj;
-
-    login.appendChild( bloqueMsj );
-
-    setTimeout(() => {
-        bloqueMsj.remove();
-    }, 2000);
-} */
-

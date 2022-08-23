@@ -1,11 +1,11 @@
 
-import { actualizarDatosAPI, eliminarDatosAPI, enviarDatosAPI, traerDatosAPI, traerDatosPorIdAPI } from '../src/funciones-API.js';
-import { crearModal, cerrarModal, crearFormArticulo, mostrarMsj, crearBtnsAccionesTabla, crearBtnsAccionesArticulo } from '../src/funciones-UI.js';
+import { actualizarDatosAPI, eliminarDatosAPI, enviarDatosAPI, traerDatosAPI, traerDatosPorIdAPI, validarTokenAPI } from '../src/funciones-API.js';
+import { crearModal, cerrarModal, crearFormArticulo, mostrarMsj, crearBtnsAccionesTabla, crearBtnsAccionesArticulo, vincularBtnCerrarSesion } from '../src/funciones-UI.js';
 import { validarInputString } from './funciones.js';
 
 // vars
 const tablaArticulos = document.querySelector('table#articulos')
-const tablaArticulosSinStock = document.querySelector('table#sinStock');
+// const tablaArticulosSinStock = document.querySelector('table#sinStock');
 
 const btnsAcciones = [
     { idBtn: 'btnConsultarArticulo', texto: 'Consultar', eventListeners: verArticulo, clasesCSS: 'btn btn-sm btn-success'},
@@ -14,13 +14,15 @@ const btnsAcciones = [
 ];
 
 const btnsAccionesTablaEliminados = [
-    { idBtn: 'btnConsultarArticulo', texto: 'Consultar', eventListeners: verArticulo, clasesCSS: 'btn btn-sm btn-success'},
     { idBtn: 'btnRestaurarArticulo', texto: 'Restaurar', eventListeners: restaurarArticulo, clasesCSS: 'btn btn-sm btn-info'},
 ];
 
 
 // Cuando se cargue el HTML...
 document.addEventListener('DOMContentLoaded', async() => {
+    const respValidacionToken = await validarTokenAPI();
+    if( !respValidacionToken ) { return; }
+    
     registrarEventListeners();
 
     const ajustesTabla = {
@@ -44,6 +46,7 @@ function switchTabla(tabla) {
 
 function setearTabla( ajustesTabla ){    
     const { tabla, datos, btns } = ajustesTabla;
+    
     cargarDatosTabla( tabla, datos );
 
     agregarBtnsAccionesTabla( tabla, datos, btns );
@@ -51,6 +54,8 @@ function setearTabla( ajustesTabla ){
 
 
 function registrarEventListeners() {
+    vincularBtnCerrarSesion();
+
     const btnCrearArticulo = document.querySelector('#btnCrearArticulo');
     btnCrearArticulo.addEventListener('click', crearArticulo);
 
@@ -216,7 +221,19 @@ function cargarDatosTabla( tabla, articulos ){
         const celdaVacia = document.createElement('td');
         celdaVacia.colSpan = '10';
         celdaVacia.classList.add('fw-bold', 'py-4', 'fs-3');
-        celdaVacia.textContent = 'No hay articulos, crea algunos con el boton azul de arriba'
+
+        switch (tabla.id) {
+            case 'sinStock':
+                celdaVacia.textContent = 'No hay articulos sin stock por ahora...'
+                break;
+            case 'eliminados':
+                celdaVacia.textContent = 'No hay articulos eliminados por ahora...'
+                break;
+
+            default:
+                celdaVacia.textContent = 'No hay articulos, crea algunos con el boton azul de arriba'
+                break;
+        }
 
         filaVacia.appendChild(celdaVacia);
 
@@ -336,8 +353,8 @@ async function editarArticulo(e) {
             setTimeout( async() => {
                 cerrarModal( modalEditarArticulo.id );
 
-                const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
-                const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
+                const tablaActual = document.querySelector('.table-responsive:not(.displayOff) table');
+                const filtroArticulos = tablaActual.getAttribute('data-articulos');
 
                 const ajustesTabla = {
                     tabla: tablaActual,
@@ -363,8 +380,8 @@ async function eliminarArticulo(e) {
             mostrarMsj( 'success', msg, blockAlerta );
 
             setTimeout( async() => {
-                const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
-                const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
+                const tablaActual = document.querySelector('.table-responsive:not(.displayOff) table');
+                const filtroArticulos = tablaActual.getAttribute('data-articulos');
 
                 const ajustesTabla = {
                     tabla: tablaActual,
@@ -397,8 +414,8 @@ async function restaurarArticulo(e) {
             mostrarMsj( 'success', msg, blockAlerta );
 
             setTimeout( async() => {
-                const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
-                const filtroArticulos = tablaActual.querySelector('table').getAttribute('data-articulos');
+                const tablaActual = document.querySelector('.table-responsive:not(.displayOff) table');
+                const filtroArticulos = tablaActual.getAttribute('data-articulos');
 
                 const ajustesTabla = {
                     tabla: tablaActual,
@@ -427,21 +444,30 @@ async function verArticulo(e){
     const modalConsultarArticulo = crearModal(paramsModalConsultarArticulo);
 
     const bodyModal = modalConsultarArticulo.querySelector('.modal-body');
-    const tablaActual = document.querySelector('.table-responsive:not(.displayOff)');
-    const idTablaActual = tablaActual.querySelector('table').id;
+    const tablaActual = document.querySelector('.table-responsive:not(.displayOff) table');
 
     let articulosPostAccion;
     // traigo los articulos correspondientes segun la tablaActual
     async function setArticulosPostAccion(){
-        switch (idTablaActual) {
-            case 'articulos':
-                articulosPostAccion = await traerArticulos();
+        articulosPostAccion = await traerArticulos( tablaActual.getAttribute('data-articulos') );
+
+        return articulosPostAccion;
+    }
+
+    let btnsPostAccion;
+
+    function setBtnsPostAccion(){
+        switch (tablaActual.id) {
+            case 'eliminados':
+                btnsPostAccion = btnsAccionesTablaEliminados;
                 break;
-            case 'sinStock':
-                articulosPostAccion = await traerArticulos('sinStock');
+                
+            default:    
+                btnsPostAccion = btnsAcciones;
                 break;
         }
-        return articulosPostAccion;
+
+        return btnsPostAccion;
     }
 
     const cerrarModalYEditar = (e) => {
@@ -460,9 +486,9 @@ async function verArticulo(e){
         const ajustesTabla = {
             tabla: tablaActual,
             datos: await setArticulosPostAccion(),
-            btns: btnsAcciones,
+            btns: setBtnsPostAccion(),
         }
-
+        
         setearTabla( ajustesTabla );
     };
 
@@ -472,7 +498,7 @@ async function verArticulo(e){
         const ajustesTabla = {
             tabla: tablaActual,
             datos: await setArticulosPostAccion(),
-            btns: btnsAcciones,
+            btns: setBtnsPostAccion(),
         }
 
         setearTabla( ajustesTabla );

@@ -1,6 +1,7 @@
 const { response } = require("express");
 const Usuario = require('../models/usuario');
 const bcryptjs = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { generarJWT } = require("../helpers/generar-jwt");
 
 const login = async( req, res = response ) => {
@@ -61,12 +62,12 @@ const logout = async( req, res = response ) => {
     const token = req.body['x-token'];
 
     try {
-        // Busco el usuario por su uid y si retorna null ( es porque el usuario no tiene guardado un token en la BD)..
+        // Busco el usuario por su uid y si retorna null ( es porque el usuario no tiene guardado un token en la BD)
         const usuario = await Usuario.findOne({ token });
 
         if( !usuario ){
             return res.status(400).json({
-                msg: "Error - la sesion esta cerrada (el usuario no tiene token..)"
+                msg: "Error - la sesion ya se encuentra CERRADA (no hay usuario con ese token..)"
             });
         }
 

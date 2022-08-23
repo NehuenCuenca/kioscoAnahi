@@ -1,12 +1,14 @@
-import { vistas, btnLogout} from './variables.js';
-import { cerrarSesion } from './funciones-API.js';
+import { validarTokenAPI } from './funciones-API.js';
+import { vincularBtnCerrarSesion } from './funciones-UI.js';
 
 
+document.addEventListener('DOMContentLoaded', async() => {
+    const respValidacionToken = await validarTokenAPI();
+    if( !respValidacionToken ) { return; }
 
-document.addEventListener('DOMContentLoaded', () =>{
     registrarEventListeners();
 });
 
 function registrarEventListeners(){
-    btnLogout.addEventListener('click', cerrarSesion);
+    vincularBtnCerrarSesion();
 }

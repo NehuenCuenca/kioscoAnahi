@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
+const { response } = require('express');
 
 const generarJWT = ( uid = '' ) => {
     return new Promise ( (resolve, reject) => {
         const payload = { uid };
 
         jwt.sign( payload, process.env.SECRETORPRIVATEKEY, {
-            expiresIn: '8h'
+            expiresIn: '2m'
         }, (err, token) => {
             if( err){
                 console.log(err);
@@ -17,8 +18,6 @@ const generarJWT = ( uid = '' ) => {
 
     });
 }
-
-
 
 module.exports = {
     generarJWT

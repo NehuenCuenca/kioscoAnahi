@@ -1,37 +1,37 @@
 
-import { actualizarDatosAPI, cerrarSesion, eliminarDatosAPI, enviarDatosAPI, traerDatosAPI, traerDatosPorIdAPI } from './funciones-API.js';
+import { actualizarDatosAPI, cerrarSesion, eliminarDatosAPI, enviarDatosAPI, traerDatosAPI, traerDatosPorIdAPI, validarTokenAPI } from './funciones-API.js';
 
 import { 
     crearModal,
-    crearSombraModal,
     cerrarModal,
-    crearColumnasDeudas,
+    crearFormVerHistorial,
     cargarSelectClientes,
-    cargarSelectArticulos,
+    cargarSelectConArticulos,
     sumarArticuloDeuda,
     crearBtnsAccionesDeuda,
-    habilitarBloqueArticulo
+    habilitarBloqueArticulo,
+    crearFormHistorialNuevo,
+    vincularBtnCerrarSesion
 } from './funciones-UI.js';
 
-import { traerFecha } from './funciones.js';
-import { btnLogout } from './variables.js';
 
 
-
-document.addEventListener('DOMContentLoaded', async() =>{
+document.addEventListener('DOMContentLoaded', async() => {
+    const respValidacionToken = await validarTokenAPI();
+    if( !respValidacionToken ) { return; }
+    
     registrarEventListeners();
 
-    const { total, deudores } = await traerDeudores();
-    imprimirDeudores(total, deudores);
+    const { deudores } = await traerDeudores();
+    imprimirDeudores( deudores );
 });
 
 function registrarEventListeners(){
-    btnLogout.addEventListener('click', cerrarSesion);
+    vincularBtnCerrarSesion();
 
     const btnCrearDeudor = document.querySelector('#btnCrearDeudor');
     btnCrearDeudor.addEventListener('click', abrirModalCrearDeudor);
 }
-
 
 
 async function traerDeudores(){
@@ -41,7 +41,9 @@ async function traerDeudores(){
         desde: null,
         filtro: '',
     }
+
     const { resp, data } = await traerDatosAPI(paramsRequestDeudores);
+    
     if( resp.status !== 200 ){
         return alert('Algo falló al tratar de traer los deudores..');
     }
@@ -58,7 +60,7 @@ function limpiarDeudores() {
 }
 
 
-function imprimirDeudores(total, deudores) {
+function imprimirDeudores( deudores ) {
     limpiarDeudores();
 
     deudores.forEach( (deudor,i) => {
@@ -99,7 +101,7 @@ function imprimirDeudores(total, deudores) {
 async function verDeuda(e) {
     const deudorId = e.target.getAttribute('data-deuda');
 
-    const { resp, data: {deudor : {historial, cliente : {_id,nombre, apellido}}} } = await traerDatosPorIdAPI('deudores', deudorId);  
+    const { resp, data: {deudor : {historial, cliente : {_id, nombre, apellido} } } } = await traerDatosPorIdAPI('deudores', deudorId);  
 
     const nombreDeudorCompleto = `${nombre.toUpperCase()} ${apellido.toUpperCase()}`;
 
@@ -110,18 +112,16 @@ async function verDeuda(e) {
         "coleccion": '',
         "size": 'modal-xl',
     }
-    const modalDeudor = crearModal(paramsModalConsultarDeudor);
+    const modalConsultarDeudor = crearModal(paramsModalConsultarDeudor);
 
     // Creo los btns de 'editar' y 'saldar
     const btnAcciones = crearBtnsAccionesDeuda( deudorId );
-    modalDeudor.querySelector('.modal-body').appendChild(btnAcciones);
+    modalConsultarDeudor.querySelector('.modal-body').appendChild(btnAcciones);
     
     // btnSaldarDeuda eventListener 
     const btnSaldarDeuda = btnAcciones.querySelector('#btnSaldarDeuda');
-    btnSaldarDeuda.addEventListener('click', (e) => {
-        if( !saldarDeuda(e) ){
-            cerrarModal(modalDeudor.id);
-        }
+    btnSaldarDeuda.addEventListener('click', async(e) => {
+        await saldarDeuda(e); 
     });
 
     // btnEditarDeuda eventListener 
@@ -132,9 +132,9 @@ async function verDeuda(e) {
         
         if( hayDeshabilitados ){
             console.log('modo editar', true);
-            usarModoEditar(modalDeudor);
+            usarModoEditar(modalConsultarDeudor);
             
-            const btnGuardarEditado = modalDeudor.querySelector('#btnGuardarDeuda button');
+            const btnGuardarEditado = modalConsultarDeudor.querySelector('#btnGuardarDeuda button');
             btnGuardarEditado.addEventListener('click', (e) => {
                 e.preventDefault();
                 guardarDeudaEditada(e);
@@ -142,42 +142,57 @@ async function verDeuda(e) {
         } else {
             console.log('modo editar', false);
 
-            salirModoEditar(modalDeudor);
-            modalDeudor.querySelector('form').remove();
+            salirModoEditar(modalConsultarDeudor);
+            modalConsultarDeudor.querySelector('form').remove();
             imprimirHistorial(); 
         }
     });
 
     async function imprimirHistorial() {
+        // Creo la estructura del historial y lo pego en el modal
+        const formHistorial = crearFormVerHistorial(historial);
+        modalConsultarDeudor.querySelector('.modal-body').appendChild( formHistorial );
+
+        // cargo y seteo el select cliente
+        cargarSelectClientes(formHistorial.querySelector('#blockCliente select'), await traerClientes());
+        formHistorial.querySelector('#blockCliente select').value = _id;
+
+        /* console.log( ...Array.from(formHistorial.querySelectorAll(`button[id^="btnSumarArticuloEnContra"]`) ))
+        console.log( ...Array.from(formHistorial.querySelectorAll(`button[id^="btnSumarArticuloAFavor"]`) ))
+        debugger */
+
+        // Oculto select cliente y btnGuardarDeuda
+        toggleDisplay(
+            formHistorial.querySelector('#blockCliente'),
+            formHistorial.querySelector('#btnGuardarDeuda'),
+            ...Array.from(formHistorial.querySelectorAll(`button[id^="btnSumarArticuloEnContra"]`) ),
+            ...Array.from(formHistorial.querySelectorAll(`button[id^="btnSumarArticuloAFavor"]`) )
+        );  
+
+        // Recorro por cada fecha que haya una deuda
         for (let j = 0; j < historial.length; j++) {
-            const {aFavor, enContra} = historial[j];
-    
-            const blockDeuda = crearColumnasDeudas();
+            const { aFavor, enContra } = historial[j];
+            const deudaActualForm = formHistorial.querySelector(`#deudaNro${j}`);
 
-            // Borro botones y selects...
-            toggleDisplay(
-                blockDeuda.querySelector('#blockCliente'),
-                blockDeuda.querySelector('#btnGuardarDeuda'),
-                blockDeuda.querySelector('#btnSumarArticuloEnContra').parentElement,
-                blockDeuda.querySelector('#btnSumarArticuloAFavor').parentElement
-            );
+            // Oculto botones y selects...
+            /* toggleDisplay(
+                formHistorial.querySelector(`#btnSumarArticuloEnContra${j}`).parentElement,
+                formHistorial.querySelector(`#btnSumarArticuloAFavor${j}`).parentElement
+            ); */
+
+            // Identifico las columnas y les pego su contenido correspondiente
+            const enContraBlock = deudaActualForm.querySelector('#blockEnContra');
+            const aFavorBlock = deudaActualForm.querySelector('#blockAFavor');
             
-            // cargo y seteo el select cliente
-            cargarSelectClientes(blockDeuda.querySelector('#blockCliente select'), await traerClientes());
-            blockDeuda.querySelector('#blockCliente select').value = _id;
-
-            const enContraBlock = blockDeuda.querySelector('#blockEnContra');
-            const aFavorBlock = blockDeuda.querySelector('#blockAFavor');
-    
             const contenidoEnContra = enContraBlock.querySelector('#contenidoColumna');
             const contenidoAFavor = aFavorBlock.querySelector('#contenidoColumna');
 
             enContraBlock.appendChild(contenidoEnContra);
             aFavorBlock.appendChild(contenidoAFavor);
-            modalDeudor.querySelector('.modal-body').appendChild( blockDeuda );
 
-            // CARGO LOS INPUTS
-            const articulos = await traerArticulos()
+
+            // CARGO LOS INPUTS de cada columna
+            const articulos = await traerArticulos();
             cargarInputs(contenidoEnContra, enContra, articulos);
             habilitarInputs(contenidoEnContra, true);
     
@@ -201,8 +216,8 @@ async function abrirModalCrearDeudor() {
     const modalCrearDeudor = crearModal( paramsModalCrearDeudor );
 
     // Creo el form con las columnas y lo agrego al modal
-    const deudaNueva = crearColumnasDeudas();
-    modalCrearDeudor.querySelector('.modal-body').appendChild(deudaNueva);
+    const historialDeudaNuevo = crearFormHistorialNuevo();
+    modalCrearDeudor.querySelector('.modal-body').appendChild(historialDeudaNuevo);
     
     cargarSelectClientes( modalCrearDeudor.querySelector('#listaClientes'), await traerClientes() );
 
@@ -213,7 +228,7 @@ async function abrirModalCrearDeudor() {
     registrarBtnSumarArticulo(columnaEnContra);
     registrarBtnSumarArticulo(columnaAFavor);
 
-    const btnGuardarDeuda = deudaNueva.querySelector('#btnGuardarDeuda');
+    const btnGuardarDeuda = historialDeudaNuevo.querySelector('#btnGuardarDeuda');
     btnGuardarDeuda.addEventListener('click', guardarDeuda)
 }
 
@@ -229,7 +244,7 @@ function registrarBtnSumarArticulo( columna )  {
         const ultimoBloqueArticulo = contenidoCol.querySelector('div[id^="blockArticuloDeuda"]:last-child');
 
         const ultimoSelect = ultimoBloqueArticulo.querySelector('select#listaArticulo');
-        cargarSelectArticulos( ultimoSelect, await traerArticulos() ); 
+        cargarSelectConArticulos( ultimoSelect, await traerArticulos() ); 
 
         ultimoBloqueArticulo.querySelector('#btnBorrarArticulo').addEventListener('click', (e) => {
             ultimoBloqueArticulo.remove();
@@ -268,36 +283,52 @@ function guardarDeudaEditada(e){
 
 function guardarValores(modal){
     const cliente = modal.querySelector('#listaClientes').value || modal.querySelector('#inputCliente').value;
-    
-    const articulosEnContra = Array.from( modal.querySelectorAll('#blockEnContra #contenidoColumna div[id^="blockArticuloDeuda"]') );
-    const articulosAFavor   = Array.from( modal.querySelectorAll('#blockAFavor #contenidoColumna div[id^="blockArticuloDeuda"]') );
 
+    const deudasPorFecha = Array.from(modal.querySelectorAll(`div[id^=deudaNro]`));
 
     // FN que crea un arreglo con los valores de cada tipo de deuda
-    const mapearValores = (arrValores = []) => {
+    const mapearValores = ( arrValores = [] ) => {
         let valoresMapeados = [];
 
         for (let i = 0; i < arrValores.length; i++) {
             const blockArticulo = arrValores[i];
     
             const articuloDeuda = {
-                "articulo": blockArticulo.querySelector('#listaArticulo').value || blockArticulo.querySelector('#articuloDeuda').value,
-                "precio": Number( blockArticulo.querySelector('#precioArticulo').value )
+                "articulo": blockArticulo.querySelector('#listaArticulo').value || blockArticulo.querySelector('#articuloDeuda').value || "",
+                "precio": Number( blockArticulo.querySelector('#precioArticulo').value ) || 0
             }
     
-            valoresMapeados = [...valoresMapeados ,articuloDeuda ];
+            valoresMapeados = [ ...valoresMapeados, articuloDeuda ];
         }
 
         return valoresMapeados;
     }
 
-    const objDeuda = {
-        cliente,
-        "historial": [{
+    let nuevoHistorial = [];
+    for (let j = 0; j < deudasPorFecha.length; j++) {
+        const deudaActual = deudasPorFecha[j];
+
+        const articulosEnContra = Array.from( deudaActual.querySelectorAll('#blockEnContra #contenidoColumna div[id^="blockArticuloDeuda"]') ) || [];
+        const articulosAFavor   = Array.from( deudaActual.querySelectorAll('#blockAFavor #contenidoColumna div[id^="blockArticuloDeuda"]') )   || [];
+
+        const objDeuda = {
             "enContra": mapearValores(articulosEnContra) || [],
             "aFavor": mapearValores(articulosAFavor) || [],
-            "fecha": traerFecha()
-        }]
+            "fecha": document.querySelector('#fechaDeuda').textContent
+        }
+
+        // Si en una fecha, los arrays estan vacios, continuo con la siguiente fecha
+        const { enContra, aFavor } = objDeuda;
+        if( enContra.length === 0 && aFavor.length === 0){
+            continue;
+        }
+
+        nuevoHistorial = [ ...nuevoHistorial, objDeuda ];
+    }
+
+    const objDeuda = {
+        cliente,
+        "historial": nuevoHistorial
     }
 
     return objDeuda;
@@ -306,28 +337,66 @@ function guardarValores(modal){
 
 async function validarDeuda(deuda, callback) {
     const { cliente, historial } = deuda;
-    const [ {enContra, aFavor} ] = historial;
 
     // verifico que el cliente no este vacio
-    if( cliente.trim().length === 0){
+    if( cliente.trim().length === 0 ){
         return alert('El campo nombre es obligatorio');
     }
+
+    if( historial.length === 0 ){
+        return alert('Debes sumar articulos a la deuda para guardar..');
+    }
    
-    // guardo el indice (si existe) del primer elemento que este incompleto, de cada uno de los arrays
-    const articuloVacioEnContra = validarArticulos(enContra);
-    const articuloVacioAFavor   = validarArticulos(aFavor);
+    const mapearIndicesVacios = (arrayArticulos) => {
+        if( arrayArticulos.length > 0 ){
+            const indices = arrayArticulos.map( (art, i) => {
+                const { articulo, precio } = art;
 
-    // Si alguno de los 2 arrays tiene un elemento incompleto, entonces true.. sino false
-    const existeArticuloVacio = (articuloVacioEnContra > -1) || (articuloVacioAFavor > -1) ;
+                // Si esta incompleto el "campo", retorno el indice+1, sino -1
+                if( !articulo || !precio || precio === 0 ){
+                    return i+1;
+                } else {
+                    return -1;
+                }
+            });
 
-    if( existeArticuloVacio ){
-        if( articuloVacioEnContra > -1 ){
-            return alert(`El articulo nro ${articuloVacioEnContra+1} de la seccion EN CONTRA, esta incompleto, asegurese de completarlo.`);
-        } else if( articuloVacioAFavor > -1 ){
-            return alert(`El articulo nro ${articuloVacioAFavor+1} de la seccion A FAVOR, esta incompleto, asegurese de completa el nombre y un precio respectivo.`);
+            // limpio los articulos que estan llenos
+            return indices.filter( indice => indice !== -1);
         } 
-    } else {
-        // Si esta todo completo, guardo la deuda en la BD
+
+        return [];
+    }
+    
+    const verificarIndices = (enContraVacios, aFavorVacios, fecha) => {
+        const existeArticuloVacio = (enContraVacios.length > 0) || (aFavorVacios.length > 0);
+
+        if( existeArticuloVacio ){
+            if( enContraVacios.length > 0 ){
+                alert(`ERROR: Deuda (fecha ${fecha}): \n Los articulos ${enContraVacios} de la seccion EN CONTRA estan INCOMPLETOS`);
+            } else if( aFavorVacios.length > 0  ){
+                alert(`ERROR: Deuda (fecha ${fecha}): \n Los articulos ${aFavorVacios} de la SECCION A FAVOR estan INCOMPLETOS`);
+            } 
+
+            return false;
+        }
+
+        return true;
+    }
+
+    let tieneVacios = false;
+    for (let i = 0; i < historial.length; i++) {
+        const { enContra, aFavor, fecha } = historial[i];
+
+        const articuloVacioEnContra = mapearIndicesVacios(enContra);
+        const articuloVacioAFavor   = mapearIndicesVacios(aFavor);
+
+        if( !verificarIndices(articuloVacioEnContra, articuloVacioAFavor, fecha) ){
+            tieneVacios = !tieneVacios;
+            break;
+        }
+    }
+
+    if( !tieneVacios ){
         callback(deuda);
     }
 }
@@ -335,14 +404,14 @@ async function validarDeuda(deuda, callback) {
 async function actualizarDeuda(deudaActualizada) {
     try {
         const deudorId = document.querySelector('#btnEditarDeuda').getAttribute('data-deuda');
-        const {resp, data} = await actualizarDatosAPI('deudores', deudorId, deudaActualizada);
+        const { resp, data } = await actualizarDatosAPI('deudores', deudorId, deudaActualizada);
         if(resp.status === 200){
             console.log('Se editó el deudor exitosamente');
             const modalActual = document.querySelector('div.modal.fade.show');
             cerrarModal(modalActual.id);
         
-            const { total, deudores } = await traerDeudores();
-            imprimirDeudores(total, deudores);
+            const { deudores } = await traerDeudores();
+            imprimirDeudores(deudores);
         }
     } catch (error) {
         console.log('No se pudo guardar el deudor, razon: ', error);
@@ -353,31 +422,19 @@ async function actualizarDeuda(deudaActualizada) {
 
 async function guardarDeudaAPI(deuda) {
     try {
-        const {resp, data} = await enviarDatosAPI('deudores', deuda);
-        if(resp.status === 200){
+        const { resp, data } = await enviarDatosAPI('deudores', deuda);
+        if( resp.status === 200 ){
             console.log('Se guardó el deudor exitosamente');
             const modalActual = document.querySelector('div.modal.fade.show');
             cerrarModal(modalActual.id);
         
-            const { total, deudores } = await traerDeudores();
-            imprimirDeudores(total, deudores);
+            const { deudores } = await traerDeudores();
+            imprimirDeudores( deudores );
         }
     } catch (error) {
         console.log('No se pudo guardar el deudor, razon: ', error);
         alert(error);
     }
-}
-
-
-// Retorno el index del primer articulo especificado en la deuda que no tenga especificado su nombre o precio
-function validarArticulos(arrArticulos){
-    return arrArticulos.findIndex( art => {
-        const { articulo, precio } = art;
-
-        if( !articulo || !precio || precio === 0){
-            return art;
-        }
-    });
 }
 
 
@@ -425,8 +482,8 @@ function salirModoEditar(modal) {
 
     toggleDisplay(
         bodyModal.querySelector('#btnGuardarDeuda'),
-        bodyModal.querySelector('#btnSumarArticuloEnContra').parentElement,
-        bodyModal.querySelector('#btnSumarArticuloAFavor').parentElement
+        ...Array.from(bodyModal.querySelectorAll('button[id^=btnSumarArticuloEnContra]')),
+        ...Array.from(bodyModal.querySelectorAll('button[id^=btnSumarArticuloAFavor]')),
     );
 
     habilitarInputs(contenidoColEnContra, true);
@@ -448,21 +505,26 @@ function toggleDisplay(...params) {
 
 function usarModoEditar(modal) {
     const bodyModal = modal.querySelector('.modal-body');
-    
-    const contenidoColEnContra = bodyModal.querySelector('#blockEnContra #contenidoColumna');
-    const contenidoColAFavor = bodyModal.querySelector('#blockAFavor #contenidoColumna');
 
+    const deudasPorFecha = Array.from(modal.querySelectorAll(`div[id^=deudaNro]`));
+        
+    // muestro btn guardar, y btn sumar Articulos
     toggleDisplay(
         bodyModal.querySelector('#btnGuardarDeuda'),
-        bodyModal.querySelector('#btnSumarArticuloEnContra').parentElement,
-        bodyModal.querySelector('#btnSumarArticuloAFavor').parentElement
+        ...Array.from(bodyModal.querySelectorAll('button[id^=btnSumarArticuloEnContra]')),
+        ...Array.from(bodyModal.querySelectorAll('button[id^=btnSumarArticuloAFavor]')),
     );
-    
-    habilitarInputs(contenidoColEnContra, false);
-    habilitarInputs(contenidoColAFavor, false);
 
-    registrarBtnSumarArticulo(contenidoColEnContra.parentElement)
-    registrarBtnSumarArticulo(contenidoColAFavor.parentElement)
+    for (let i = 0; i < deudasPorFecha.length; i++) {
+        const contenidoColEnContra = deudasPorFecha[i].querySelector('#blockEnContra #contenidoColumna');
+        const contenidoColAFavor = deudasPorFecha[i].querySelector('#blockAFavor #contenidoColumna');
+
+        habilitarInputs(contenidoColEnContra, false);
+        habilitarInputs(contenidoColAFavor, false);
+
+        registrarBtnSumarArticulo(contenidoColEnContra.parentElement);
+        registrarBtnSumarArticulo(contenidoColAFavor.parentElement);
+    }
 }
 
 
@@ -478,7 +540,7 @@ function habilitarInputs(contenidoColumna, bool) {
 
 async function cargarInputs(contenidoColumna, datos, articulos) {
     for (let i = 0; i < datos.length; i++) {
-        const {articulo: {_id}, precio} = datos[i];
+        const { articulo: { _id }, precio } = datos[i];
 
         // creo los inputs y selects
         sumarArticuloDeuda(contenidoColumna);
@@ -491,7 +553,7 @@ async function cargarInputs(contenidoColumna, datos, articulos) {
         btnBorrarArticulo.style.display = 'none';
 
         // CargarDatos
-        cargarSelectArticulos(selectNombreArticulo, articulos);
+        cargarSelectConArticulos(selectNombreArticulo, articulos);
         selectNombreArticulo.value = _id;
         inputPrecioArticulo.value  = precio;
     }
@@ -506,11 +568,11 @@ async function saldarDeuda(e) {
     if( confirmBorrarDeudor ){
         try {
             const { resp, data : {msg} } = await eliminarDatosAPI('deudores', deudorId);
-            if(resp.status === 200){
+            if( resp.status === 200 ){
                 alert(msg);
 
-                const { total, deudores } = await traerDeudores();
-                imprimirDeudores(total, deudores);
+                const { deudores } = await traerDeudores();
+                imprimirDeudores( deudores );
                 return true;
             }
         } catch (error) {
@@ -518,6 +580,6 @@ async function saldarDeuda(e) {
             alert('No se pudo eliminar el deudor, razon: ', error);
         }
     }
-    
+
     return false;
 }

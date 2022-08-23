@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { check, body }  = require('express-validator');
+const { check }  = require('express-validator');
 
 const { validarCampos, validarJWT, tieneRole } = require('../middlewares');
 
@@ -31,8 +31,6 @@ router.post('/',[
     tieneRole('ADMIN_ROLE','VENTAS_ROLE', 'USER_ROLE'),
     check('historial', 'El historial es obligatorio').not().isEmpty(),
     check('cliente', 'El cliente es obligatorio').not().isEmpty(),
-    check('cliente', 'No es un ID valido').isMongoId(),
-    check('cliente').custom( existeClientePorID ),
     validarCampos
 ], crearDeudor);
 
